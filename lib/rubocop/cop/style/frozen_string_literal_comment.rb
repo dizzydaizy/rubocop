@@ -5,13 +5,21 @@ module RuboCop
     module Style
       # This cop is designed to help you transition from mutable string literals
       # to frozen string literals.
-      # It will add the comment `# frozen_string_literal: true` to the top of
-      # files to enable frozen string literals. Frozen string literals may be
+      # It will add the `# frozen_string_literal: true` magic comment to the top
+      # of files to enable frozen string literals. Frozen string literals may be
       # default in future Ruby. The comment will be added below a shebang and
       # encoding comment.
       #
-      # Note that the cop will ignore files where the comment exists but is set
+      # Note that the cop will accept files where the comment exists but is set
       # to `false` instead of `true`.
+      #
+      # To require a blank line after this comment, please see
+      # `Layout/EmptyLineAfterMagicComment` cop.
+      #
+      # @safety
+      #  This cop's autocorrection is unsafe since any strings mutations will
+      #  change from being accepted to raising `FrozenError`, as all strings
+      #  will become frozen by default, and will need to be manually refactored.
       #
       # @example EnforcedStyle: always (default)
       #   # The `always` style will always add the frozen string literal comment
@@ -79,8 +87,7 @@ module RuboCop
         include RangeHelp
         extend AutoCorrector
 
-        MSG_MISSING_TRUE = 'Missing magic comment `# frozen_string_literal: '\
-                           'true`.'
+        MSG_MISSING_TRUE = 'Missing magic comment `# frozen_string_literal: true`.'
         MSG_MISSING = 'Missing frozen string literal comment.'
         MSG_UNNECESSARY = 'Unnecessary frozen string literal comment.'
         MSG_DISABLED = 'Frozen string literal comment must be set to `true`.'
@@ -139,24 +146,20 @@ module RuboCop
 
         def frozen_string_literal_comment(processed_source)
           processed_source.find_token do |token|
-            token.text.start_with?(FrozenStringLiteral::FROZEN_STRING_LITERAL)
+            token.text.start_with?(FROZEN_STRING_LITERAL)
           end
         end
 
         def missing_offense(processed_source)
           range = source_range(processed_source.buffer, 0, 0)
 
-          add_offense(range, message: MSG_MISSING) do |corrector|
-            insert_comment(corrector)
-          end
+          add_offense(range, message: MSG_MISSING) { |corrector| insert_comment(corrector) }
         end
 
         def missing_true_offense(processed_source)
           range = source_range(processed_source.buffer, 0, 0)
 
-          add_offense(range, message: MSG_MISSING_TRUE) do |corrector|
-            insert_comment(corrector)
-          end
+          add_offense(range, message: MSG_MISSING_TRUE) { |corrector| insert_comment(corrector) }
         end
 
         def unnecessary_comment_offense(processed_source)

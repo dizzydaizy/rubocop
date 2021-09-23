@@ -20,16 +20,26 @@ RSpec.describe RuboCop::Cop::Style::Semicolon, :config do
                            ^ Do not use semicolons to terminate expressions.
     RUBY
 
-    expect_no_corrections
+    expect_correction(<<~RUBY)
+      puts "this is a test"
+       puts "So is this"
+    RUBY
   end
 
   it 'registers an offense for one line method with two statements' do
     expect_offense(<<~RUBY)
       def foo(a) x(1); y(2); z(3); end
+                                 ^ Do not use semicolons to terminate expressions.
+                           ^ Do not use semicolons to terminate expressions.
                      ^ Do not use semicolons to terminate expressions.
     RUBY
 
-    expect_no_corrections
+    expect_correction(<<~RUBY)
+      def foo(a) x(1)
+       y(2)
+       z(3)
+       end
+    RUBY
   end
 
   it 'accepts semicolon before end if so configured' do

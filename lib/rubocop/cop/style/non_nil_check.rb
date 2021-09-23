@@ -63,13 +63,11 @@ module RuboCop
 
         def on_send(node)
           return if ignored_node?(node) ||
-                    !include_semantic_changes? && nil_comparison_style == 'comparison'
+                    (!include_semantic_changes? && nil_comparison_style == 'comparison')
           return unless register_offense?(node)
 
           message = message(node)
-          add_offense(node, message: message) do |corrector|
-            autocorrect(corrector, node)
-          end
+          add_offense(node, message: message) { |corrector| autocorrect(corrector, node) }
         end
 
         def on_def(node)
@@ -89,7 +87,7 @@ module RuboCop
 
         def register_offense?(node)
           not_equal_to_nil?(node) ||
-            include_semantic_changes? && (not_and_nil_check?(node) || unless_and_nil_check?(node))
+            (include_semantic_changes? && (not_and_nil_check?(node) || unless_and_nil_check?(node)))
         end
 
         def autocorrect(corrector, node)
@@ -106,8 +104,7 @@ module RuboCop
         def unless_and_nil_check?(send_node)
           parent = send_node.parent
 
-          nil_check?(send_node) && unless_check?(parent) && !parent.ternary? &&
-            parent.unless?
+          nil_check?(send_node) && unless_check?(parent) && !parent.ternary? && parent.unless?
         end
 
         def message(node)

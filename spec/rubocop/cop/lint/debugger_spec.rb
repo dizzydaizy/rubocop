@@ -2,9 +2,7 @@
 
 RSpec.describe RuboCop::Cop::Lint::Debugger, :config do
   context 'with the DebuggerMethods configuration' do
-    let(:cop_config) do
-      { 'DebuggerMethods' => %w[custom_debugger] }
-    end
+    let(:cop_config) { { 'DebuggerMethods' => %w[custom_debugger] } }
 
     it 'does not register an offense for a byebug call' do
       expect_no_offenses(<<~RUBY)
@@ -20,13 +18,7 @@ RSpec.describe RuboCop::Cop::Lint::Debugger, :config do
     end
 
     context 'nested custom configurations' do
-      let(:cop_config) do
-        {
-          'DebuggerMethods' => {
-            'Custom' => %w[custom_debugger]
-          }
-        }
-      end
+      let(:cop_config) { { 'DebuggerMethods' => { 'Custom' => %w[custom_debugger] } } }
 
       it 'registers an offense for a `custom_debugger call' do
         expect_offense(<<~RUBY)
@@ -119,6 +111,36 @@ RSpec.describe RuboCop::Cop::Lint::Debugger, :config do
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Remove debugger entry point `save_and_open_screenshot foo`.
         RUBY
       end
+    end
+  end
+
+  context 'debug.rb' do
+    it 'registers an offense for a `b` binding call' do
+      expect_offense(<<~RUBY)
+        binding.b
+        ^^^^^^^^^ Remove debugger entry point `binding.b`.
+      RUBY
+    end
+
+    it 'registers an offense for a `break` binding call' do
+      expect_offense(<<~RUBY)
+        binding.break
+        ^^^^^^^^^^^^^ Remove debugger entry point `binding.break`.
+      RUBY
+    end
+
+    it 'registers an offense for a `binding.b` with `Kernel` call' do
+      expect_offense(<<~RUBY)
+        Kernel.binding.b
+        ^^^^^^^^^^^^^^^^ Remove debugger entry point `Kernel.binding.b`.
+      RUBY
+    end
+
+    it 'registers an offense for a `binding.break` with `Kernel` call' do
+      expect_offense(<<~RUBY)
+        Kernel.binding.break
+        ^^^^^^^^^^^^^^^^^^^^ Remove debugger entry point `Kernel.binding.break`.
+      RUBY
     end
   end
 
@@ -222,6 +244,15 @@ RSpec.describe RuboCop::Cop::Lint::Debugger, :config do
       expect_offense(<<~RUBY)
         ::Kernel.debugger
         ^^^^^^^^^^^^^^^^^ Remove debugger entry point `::Kernel.debugger`.
+      RUBY
+    end
+  end
+
+  context 'RubyJard' do
+    it 'registers an offense for a jard call' do
+      expect_offense(<<~RUBY)
+        jard
+        ^^^^ Remove debugger entry point `jard`.
       RUBY
     end
   end

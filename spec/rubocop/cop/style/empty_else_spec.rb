@@ -117,23 +117,18 @@ RSpec.describe RuboCop::Cop::Style::EmptyElse, :config do
       end
 
       context 'with an empty comment' do
-        let(:source) { <<~RUBY }
-          if cond
-            something
-          else
-          ^^^^ Redundant `else`-clause.
-            # TODO
-          end
-        RUBY
-        let(:corrected_source) { <<~RUBY }
-          if cond
-            something
-          else
-            # TODO
-          end
-        RUBY
+        it 'does not auto-correct' do
+          expect_offense(<<~RUBY)
+            if cond
+              something
+            else
+            ^^^^ Redundant `else`-clause.
+              # TODO
+            end
+          RUBY
 
-        it_behaves_like 'auto-correct', 'if'
+          expect_no_corrections
+        end
       end
     end
 
@@ -266,8 +261,7 @@ RSpec.describe RuboCop::Cop::Style::EmptyElse, :config do
         end
       end
 
-      context 'with an else-clause containing only the literal nil ' \
-              'using semicolons' do
+      context 'with an else-clause containing only the literal nil using semicolons' do
         context 'with one elsif' do
           let(:source) { <<~RUBY }
             if a; foo elsif b; bar else nil end

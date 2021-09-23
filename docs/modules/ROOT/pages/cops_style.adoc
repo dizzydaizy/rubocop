@@ -66,7 +66,7 @@ class Foo
 end
 ----
 
-==== AllowModifiersOnSymbols: true
+==== AllowModifiersOnSymbols: true (default)
 
 [source,ruby]
 ----
@@ -230,14 +230,18 @@ alias_method :bar, :foo
 
 | Enabled
 | Yes
-| Yes
+| Yes (Unsafe)
 | 0.9
-| 0.25
+| 1.21
 |===
 
 This cop checks for uses of `and` and `or`, and suggests using `&&` and
 `||` instead. It can be configured to check only in conditions or in
 all contexts.
+
+It is marked as unsafe auto-correction because it may change the
+operator precedence between logical operators (`&&` and `||`) and
+semantic operators (`and` and `or`).
 
 === Examples
 
@@ -443,11 +447,11 @@ array literal or the second is a string literal.
 |===
 | Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
 
-| Enabled
+| Disabled
 | Yes
 | No
 | 0.9
-| 0.52
+| 1.21
 |===
 
 This cop checks for non-ascii (non-English) characters
@@ -700,6 +704,11 @@ of comments...
 Check for uses of braces or do/end around single line or
 multi-line blocks.
 
+Methods that can be either procedural or functional and cannot be
+categorised from their usage alone is ignored.
+`lambda`, `proc`, and `it` are their defaults.
+Additional methods can be added to the `IgnoredMethods`.
+
 === Examples
 
 ==== EnforcedStyle: line_count_based (default)
@@ -847,6 +856,20 @@ def bar(foo)
 end
 ----
 
+==== IgnoredMethods: ['lambda', 'proc', 'it' ] (default)
+
+[source,ruby]
+----
+# good
+foo = lambda do |x|
+  puts "Hello, #{x}"
+end
+
+foo = lambda do |x|
+  x * 100
+end
+----
+
 === Configurable attributes
 
 |===
@@ -895,12 +918,14 @@ end
 
 This cop checks for uses of the case equality operator(===).
 
+If `AllowOnConstant` option is enabled, the cop will ignore violations when the receiver of
+the case equality operator is a constant.
+
 === Examples
 
 [source,ruby]
 ----
 # bad
-Array === something
 (1..100) === 7
 /something/ === some_string
 
@@ -910,21 +935,20 @@ something.is_a?(Array)
 /something/.match?(some_string)
 ----
 
-==== AllowOnConstant
+==== AllowOnConstant: false (default)
 
 [source,ruby]
 ----
-# Style/CaseEquality:
-#   AllowOnConstant: true
-
 # bad
-(1..100) === 7
-/something/ === some_string
+Array === something
+----
 
+==== AllowOnConstant: true
+
+[source,ruby]
+----
 # good
 Array === something
-(1..100).include?(7)
-/something/.match?(some_string)
 ----
 
 === Configurable attributes
@@ -1741,11 +1765,14 @@ folders = %x(find . -type d).split
 | Yes
 | Yes
 | 0.10
-| 1.3
+| 1.20
 |===
 
 This cop checks that comment annotation keywords are written according
 to guidelines.
+
+Annotation keywords can be specified by overriding the cop's `Keywords`
+configuration. Keywords are allowed to be single words or phrases.
 
 NOTE: With a multiline comment block (where each line is only a
 comment), only the first line will be able to register an offense, even
@@ -1754,6 +1781,8 @@ incorrect registering of keywords (eg. `review`) inside a paragraph as an
 annotation.
 
 === Examples
+
+==== RequireColon: true (default)
 
 [source,ruby]
 ----
@@ -1782,6 +1811,29 @@ annotation.
 # OPTIMIZE: does not work
 ----
 
+==== RequireColon: false
+
+[source,ruby]
+----
+# bad
+# TODO: make better
+
+# good
+# TODO make better
+
+# bad
+# fixme does not work
+
+# good
+# FIXME does not work
+
+# bad
+# Optimize does not work
+
+# good
+# OPTIMIZE does not work
+----
+
 === Configurable attributes
 
 |===
@@ -1790,6 +1842,10 @@ annotation.
 | Keywords
 | `TODO`, `FIXME`, `OPTIMIZE`, `HACK`, `REVIEW`, `NOTE`
 | Array
+
+| RequireColon
+| `true`
+| Boolean
 |===
 
 === References
@@ -1803,9 +1859,9 @@ annotation.
 
 | Enabled
 | Yes
-| Yes
+| Yes (Unsafe)
 | 0.51
-| 1.7
+| 1.19
 |===
 
 This cop checks for comments put on the same line as some keywords.
@@ -1817,6 +1873,7 @@ are allowed.
 
 Auto-correction removes comments from `end` keyword and keeps comments
 for `class`, `module`, `def` and `begin` above the keyword.
+It is marked as unsafe auto-correction as it may remove meaningful comments.
 
 === Examples
 
@@ -2467,10 +2524,26 @@ end
   end
 ----
 
+==== AllowedConstants: ['ClassMethods']
+
+[source,ruby]
+----
+# good
+module A
+  module ClassMethods
+    # ...
+  end
+ end
+----
+
 === Configurable attributes
 
 |===
 | Name | Default value | Configurable values
+
+| AllowedConstants
+| `[]`
+| Array
 
 | Exclude
 | `spec/**/*`, `test/**/*`
@@ -3285,7 +3358,7 @@ will not attempt to automatically add a binding, or add filename and
 line values.
 
 This cop works only when a string literal is given as a code string.
-No offence is reported if a string variable is given as below:
+No offense is reported if a string variable is given as below:
 
 === Examples
 
@@ -3915,13 +3988,16 @@ redirect('foo/%{bar_id}')
 
 This cop is designed to help you transition from mutable string literals
 to frozen string literals.
-It will add the comment `# frozen_string_literal: true` to the top of
-files to enable frozen string literals. Frozen string literals may be
+It will add the `# frozen_string_literal: true` magic comment to the top
+of files to enable frozen string literals. Frozen string literals may be
 default in future Ruby. The comment will be added below a shebang and
 encoding comment.
 
 Note that the cop will ignore files where the comment exists but is set
 to `false` instead of `true`.
+
+To require a blank line after this comment, please see
+`Layout/EmptyLineAfterMagicComment` cop.
 
 === Examples
 
@@ -4299,6 +4375,10 @@ Hash[*ary]
 | Boolean
 |===
 
+=== References
+
+* https://rubystyle.guide#avoid-hash-constructor
+
 == Style/HashEachMethods
 
 |===
@@ -4308,7 +4388,7 @@ Hash[*ary]
 | No
 | Yes (Unsafe)
 | 0.80
-| -
+| 1.16
 |===
 
 This cop checks for uses of `each_key` and `each_value` Hash methods.
@@ -4329,6 +4409,25 @@ hash.values.each { |v| p v }
 hash.each_key { |k| p k }
 hash.each_value { |v| p v }
 ----
+
+==== AllowedReceivers: ['execute']
+
+[source,ruby]
+----
+# good
+execute(sql).keys.each { |v| p v }
+execute(sql).values.each { |v| p v }
+----
+
+=== Configurable attributes
+
+|===
+| Name | Default value | Configurable values
+
+| AllowedReceivers
+| `[]`
+| Array
+|===
 
 === References
 
@@ -4542,8 +4641,6 @@ syntax hashes
 
 == Style/HashTransformKeys
 
-NOTE: Required Ruby version: 2.5
-
 |===
 | Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
 
@@ -4627,14 +4724,30 @@ Hash[{a: 1, b: 2}.collect { |k, v| [k, foo(v)] }]
 
 | Enabled
 | Yes
-| No
+| Yes (Unsafe)
 | 0.36
-| -
+| 1.19
 |===
 
 This cop checks for identical expressions at the beginning or end of
 each branch of a conditional expression. Such expressions should normally
 be placed outside the conditional expression - before or after it.
+
+This cop is marked unsafe auto-correction as the order of method invocations
+must be guaranteed in the following case:
+
+[source,ruby]
+----
+if method_that_modifies_global_state # 1
+  method_that_relies_on_global_state # 2
+  foo                                # 3
+else
+  method_that_relies_on_global_state # 2
+  bar                                # 3
+end
+----
+
+In such a case, auto-correction may change the invocation order.
 
 NOTE: The cop is poorly named and some people might think that it actually
 checks for duplicated conditional branches. The name will probably be changed
@@ -4694,6 +4807,28 @@ when 1
   do_x
   do_y
 when 2
+  # nothing
+else
+  do_x
+  do_z
+end
+
+# bad
+case foo
+in 1
+  do_x
+in 2
+  do_x
+else
+  do_x
+end
+
+# good
+case foo
+in 1
+  do_x
+  do_y
+in 2
   # nothing
 else
   do_x
@@ -4987,6 +5122,43 @@ raise 'Error message here'
 # good
 raise ArgumentError, 'Error message here'
 ----
+
+== Style/InPatternThen
+
+NOTE: Required Ruby version: 2.7
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Pending
+| Yes
+| Yes
+| 1.16
+| -
+|===
+
+This cop checks for `in;` uses in `case` expressions.
+
+=== Examples
+
+[source,ruby]
+----
+# bad
+case expression
+in pattern_a; foo
+in pattern_b; bar
+end
+
+# good
+case expression
+in pattern_a then foo
+in pattern_b then bar
+end
+----
+
+=== References
+
+* https://rubystyle.guide#no-in-pattern-semicolons
 
 == Style/InfiniteLoop
 
@@ -5423,8 +5595,12 @@ options.
     to `true` allows the presence of parentheses in such a method call
     even with arguments.
 
-NOTE: Parens are required around a method with arguments when inside an
-endless method definition (>= Ruby 3.0).
+NOTE: Parentheses are still allowed in cases where omitting them
+results in ambiguous or syntactically incorrect code. For example,
+parentheses are required around a method with arguments when inside an
+endless method definition introduced in Ruby 3.0.  Parentheses are also
+allowed when forwarding arguments with the triple-dot syntax introduced
+in Ruby 2.7 as omitting them starts an endless range.
 
 === Examples
 
@@ -5468,6 +5644,30 @@ foo.enforce(strict: true)
 
 # good
 foo.enforce strict: true
+
+# good
+# Allows parens for calls that won't produce valid Ruby or be ambiguous.
+model.validate strict(true)
+
+# good
+# Allows parens for calls that won't produce valid Ruby or be ambiguous.
+yield path, File.basename(path)
+
+# good
+# Operators methods calls with parens
+array&.[](index)
+
+# good
+# Operators methods without parens, if you prefer
+array.[] index
+
+# good
+# Operators methods calls with parens
+array&.[](index)
+
+# good
+# Operators methods without parens, if you prefer
+array.[] index
 ----
 
 ==== IgnoreMacros: true (default)
@@ -5562,6 +5762,28 @@ Array(1)
 Array 1
 ----
 
+==== AllowParenthesesInStringInterpolation: false (default)
+
+[source,ruby]
+----
+# bad
+"#{t('this.is.bad')}"
+
+# good
+"#{t 'this.is.better'}"
+----
+
+==== AllowParenthesesInStringInterpolation: true
+
+[source,ruby]
+----
+# good
+"#{t('this.is.good')}"
+
+# good
+"#{t 'this.is.also.good'}"
+----
+
 === Configurable attributes
 
 |===
@@ -5592,6 +5814,10 @@ Array 1
 | Boolean
 
 | AllowParenthesesInCamelCaseMethod
+| `false`
+| Boolean
+
+| AllowParenthesesInStringInterpolation
 | `false`
 | Boolean
 
@@ -5847,6 +6073,9 @@ return foo.minmax
 |===
 
 Checks for `if` expressions that do not have an `else` branch.
+
+NOTE: Pattern matching is allowed to have no `else` branch because unlike `if` and `case`,
+it raises `NoMatchingPatternError` if the pattern doesn't match and without having `else`.
 
 Supported styles are: if, case, both.
 
@@ -6338,6 +6567,52 @@ end
 
 * https://rubystyle.guide#no-then
 
+== Style/MultilineInPatternThen
+
+NOTE: Required Ruby version: 2.7
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Pending
+| Yes
+| Yes
+| 1.16
+| -
+|===
+
+This cop checks uses of the `then` keyword in multi-line `in` statement.
+
+=== Examples
+
+[source,ruby]
+----
+# bad
+case expression
+in pattern then
+end
+
+# good
+case expression
+in pattern
+end
+
+# good
+case expression
+in pattern then do_something
+end
+
+# good
+case expression
+in pattern then do_something(arg1,
+                             arg2)
+end
+----
+
+=== References
+
+* https://rubystyle.guide#no-then
+
 == Style/MultilineMemoization
 
 |===
@@ -6578,6 +6853,16 @@ foo if a == b.lightweight || a == b.heavyweight
 foo if [b.lightweight, b.heavyweight].include?(a)
 ----
 
+=== Configurable attributes
+
+|===
+| Name | Default value | Configurable values
+
+| AllowMethodComparison
+| `true`
+| Boolean
+|===
+
 == Style/MutableConstant
 
 |===
@@ -6601,7 +6886,19 @@ frozen objects so there is a decent chance of getting some false
 positives. Luckily, there is no harm in freezing an already
 frozen object.
 
+From Ruby 3.0, this cop honours the magic comment
+'shareable_constant_value'. When this magic comment is set to any
+acceptable value other than none, it will suppress the offenses
+raised by this cop. It enforces frozen state.
+
 NOTE: Regexp and Range literals are frozen objects since Ruby 3.0.
+
+NOTE: From Ruby 3.0, this cop allows explicit freezing of interpolated
+string literals when `# frozen-string-literal: true` is used.
+
+NOTE: This special directive helps to create constants
+that hold only immutable objects, or Ractor-shareable
+constants. - ruby docs
 
 === Examples
 
@@ -6647,6 +6944,18 @@ CONST = Struct.new do
     puts 1
   end
 end.freeze
+----
+
+[source,ruby]
+----
+# Magic comment - shareable_constant_value: literal
+
+# bad
+CONST = [1, 2, 3]
+
+# good
+# shareable_constant_value: literal
+CONST = [1, 2, 3]
 ----
 
 === Configurable attributes
@@ -7192,11 +7501,11 @@ end
 | Yes
 | Yes
 | 1.3
-| -
+| 1.15
 |===
 
-This cop checks for lambdas that always return nil, which can be replaced
-with an empty lambda instead.
+This cop checks for lambdas and procs that always return nil,
+which can be replaced with an empty lambda or proc instead.
 
 === Examples
 
@@ -7209,6 +7518,12 @@ lambda do
   next nil
 end
 
+proc { nil }
+
+Proc.new do
+  break nil
+end
+
 # good
 -> {}
 
@@ -7216,6 +7531,10 @@ lambda do
 end
 
 -> (x) { nil if x }
+
+proc {}
+
+Proc.new { nil if x }
 ----
 
 == Style/NonNilCheck
@@ -7632,6 +7951,10 @@ end
 
 | SuspiciousParamNames
 | `options`, `opts`, `args`, `params`, `parameters`
+| Array
+
+| Allowlist
+| `[]`
 | Array
 |===
 
@@ -8139,6 +8462,65 @@ p = proc { |n| puts n }
 
 * https://rubystyle.guide#proc
 
+== Style/QuotedSymbols
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Pending
+| Yes
+| Yes
+| 1.16
+| -
+|===
+
+Checks if the quotes used for quoted symbols match the configured defaults.
+By default uses the same configuration as `Style/StringLiterals`.
+
+String interpolation is always kept in double quotes.
+
+Note: `Lint/SymbolConversion` can be used in parallel to ensure that symbols
+are not quoted that don't need to be. This cop is for configuring the quoting
+style to use for symbols that require quotes.
+
+=== Examples
+
+==== EnforcedStyle: same_as_string_literals (default) / single_quotes
+
+[source,ruby]
+----
+# bad
+:"abc-def"
+
+# good
+:'abc-def'
+:"#{str}"
+:"a\'b"
+----
+
+==== EnforcedStyle: double_quotes
+
+[source,ruby]
+----
+# bad
+:'abc-def'
+
+# good
+:"abc-def"
+:"#{str}"
+:"a\'b"
+----
+
+=== Configurable attributes
+
+|===
+| Name | Default value | Configurable values
+
+| EnforcedStyle
+| `same_as_string_literals`
+| `same_as_string_literals`, `single_quotes`, `double_quotes`
+|===
+
 == Style/RaiseArgs
 
 |===
@@ -8176,6 +8558,7 @@ raise StandardError.new('message')
 # good
 raise StandardError, 'message'
 fail 'message'
+raise MyCustomError
 raise MyCustomError.new(arg1, arg2, arg3)
 raise MyKwArgError.new(key1: val1, key2: val2)
 
@@ -8194,6 +8577,7 @@ raise RuntimeError, arg1, arg2, arg3
 
 # good
 raise StandardError.new('message')
+raise MyCustomError
 raise MyCustomError.new(arg1, arg2, arg3)
 fail 'message'
 ----
@@ -8418,7 +8802,6 @@ end
 do_something
 
 # bad
-# When using Ruby 2.5 or later.
 do_something do
   begin
     something
@@ -8715,6 +9098,9 @@ require_relative '../foo.so'
 This cop check for uses of `Object#freeze` on immutable objects.
 
 NOTE: Regexp and Range literals are frozen objects since Ruby 3.0.
+
+NOTE: From Ruby 3.0, this cop allows explicit freezing of interpolated
+string literals when `# frozen-string-literal: true` is used.
 
 === Examples
 
@@ -9077,6 +9463,40 @@ self.foo = foo.concat(ary)
 # good
 foo.concat(ary)
 self.foo += ary
+----
+
+== Style/RedundantSelfAssignmentBranch
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Pending
+| Yes
+| Yes
+| 1.19
+| -
+|===
+
+This cop checks for places where conditional branch makes redundant self-assignment.
+
+It only detects local variable because it may replace state of instance variable,
+class variable, and global variable that have state across methods with `nil`.
+
+=== Examples
+
+[source,ruby]
+----
+# bad
+foo = condition ? bar : foo
+
+# good
+foo = bar if condition
+
+# bad
+foo = condition ? foo : bar
+
+# good
+foo = bar unless condition
 ----
 
 == Style/RedundantSort
@@ -10175,6 +10595,9 @@ end
 |===
 
 This cop looks for uses of Perl-style global variables.
+Correcting to global variables in the 'English' library
+will add a require statement to the top of the file if
+enabled by RequireEnglish config.
 
 === Examples
 
@@ -10183,6 +10606,8 @@ This cop looks for uses of Perl-style global variables.
 [source,ruby]
 ----
 # good
+require 'English' # or this could be in another file.
+
 puts $LOAD_PATH
 puts $LOADED_FEATURES
 puts $PROGRAM_NAME
@@ -10232,6 +10657,10 @@ puts $*
 
 |===
 | Name | Default value | Configurable values
+
+| RequireEnglish
+| `true`
+| Boolean
 
 | EnforcedStyle
 | `use_english_names`
@@ -10385,6 +10814,39 @@ warn('hello')
 
 * https://rubystyle.guide#warn
 
+== Style/StringChars
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Pending
+| No
+| Yes (Unsafe)
+| 1.12
+| -
+|===
+
+Checks for uses of `String#split` with empty string or regexp literal argument.
+
+This cop is marked as unsafe. But probably it's quite unlikely that some other class would
+define a `split` method that takes exactly the same arguments.
+
+=== Examples
+
+[source,ruby]
+----
+# bad
+string.split(//)
+string.split('')
+
+# good
+string.chars
+----
+
+=== References
+
+* https://rubystyle.guide#string-chars
+
 == Style/StringConcatenation
 
 |===
@@ -10394,7 +10856,7 @@ warn('hello')
 | No
 | Yes (Unsafe)
 | 0.89
-| 1.6
+| 1.18
 |===
 
 This cop checks for places where string concatenation
@@ -10409,21 +10871,56 @@ NOTE: When concatenation between two strings is broken over multiple
 lines, this cop does not register an offense; instead,
 `Style/LineEndConcatenation` will pick up the offense if enabled.
 
+Two modes are supported:
+1. `aggressive` style checks and corrects all occurrences of `+` where
+either the left or right side of `+` is a string literal.
+2. `conservative` style on the other hand, checks and corrects only if
+left side (receiver of `+` method call) is a string literal.
+This is useful when the receiver is some expression that returns string like `Pathname`
+instead of a string literal.
+
 === Examples
+
+==== Mode: aggressive (default)
 
 [source,ruby]
 ----
 # bad
 email_with_name = user.name + ' <' + user.email + '>'
+Pathname.new('/') + 'test'
 
 # good
 email_with_name = "#{user.name} <#{user.email}>"
 email_with_name = format('%s <%s>', user.name, user.email)
+"#{Pathname.new('/')}test"
 
 # accepted, line-end concatenation
 name = 'First' +
   'Last'
 ----
+
+==== Mode: conservative
+
+[source,ruby]
+----
+# bad
+'Hello' + user.name
+
+# good
+"Hello #{user.name}"
+user.name + '!!'
+Pathname.new('/') + 'test'
+----
+
+=== Configurable attributes
+
+|===
+| Name | Default value | Configurable values
+
+| Mode
+| `aggressive`
+| String
+|===
 
 === References
 
@@ -10644,12 +11141,15 @@ This cop identifies places where `lstrip.rstrip` can be replaced by
 
 | Enabled
 | Yes
-| Yes
+| Yes (Unsafe)
 | 0.29
-| 0.86
+| 1.20
 |===
 
 This cop checks for inheritance from Struct.new.
+
+It is marked as unsafe auto-correction because it will change the
+inheritance tree (e.g. return value of `Module#ancestors`).
 
 === Examples
 
@@ -10958,6 +11458,68 @@ foo = (bar = baz) ? a : b
 | Boolean
 |===
 
+== Style/TopLevelMethodDefinition
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Disabled
+| Yes
+| No
+| 1.15
+| -
+|===
+
+Newcomers to ruby applications may write top-level methods,
+when ideally they should be organized in appropriate classes or modules.
+This cop looks for definitions of top-level methods and warns about them.
+
+However for ruby scripts it is perfectly fine to use top-level methods.
+Hence this cop is disabled by default.
+
+=== Examples
+
+[source,ruby]
+----
+# bad
+def some_method
+end
+
+# bad
+def self.some_method
+end
+
+# bad
+define_method(:foo) { puts 1 }
+
+# good
+module Foo
+  def some_method
+  end
+end
+
+# good
+class Foo
+  def self.some_method
+  end
+end
+
+# good
+Struct.new do
+  def some_method
+  end
+end
+
+# good
+class Foo
+  define_method(:foo) { puts 1 }
+end
+----
+
+=== References
+
+* https://rubystyle.guide#top-level-methods
+
 == Style/TrailingBodyOnClass
 
 |===
@@ -11000,6 +11562,8 @@ end
 
 This cop checks for trailing code after the method definition.
 
+NOTE: It always accepts endless method definitions that are basically on the same line.
+
 === Examples
 
 [source,ruby]
@@ -11021,6 +11585,8 @@ def f(x)
   b = foo
   b[c: x]
 end
+
+def endless_method = do_stuff
 ----
 
 == Style/TrailingBodyOnModule
@@ -11575,7 +12141,7 @@ a, b, _something = foo()
 | Yes
 | Yes
 | 0.9
-| 0.77
+| 1.15
 |===
 
 This cop looks for trivial reader/writer methods, that could
@@ -11607,6 +12173,107 @@ class << self
 end
 ----
 
+==== ExactNameMatch: true (default)
+
+[source,ruby]
+----
+# good
+def name
+  @other_name
+end
+----
+
+==== ExactNameMatch: false
+
+[source,ruby]
+----
+# bad
+def name
+  @other_name
+end
+----
+
+==== AllowPredicates: true (default)
+
+[source,ruby]
+----
+# good
+def foo?
+  @foo
+end
+----
+
+==== AllowPredicates: false
+
+[source,ruby]
+----
+# bad
+def foo?
+  @foo
+end
+
+# good
+attr_reader :foo
+----
+
+==== AllowDSLWriters: true (default)
+
+[source,ruby]
+----
+# good
+def on_exception(action)
+  @on_exception=action
+end
+----
+
+==== AllowDSLWriters: false
+
+[source,ruby]
+----
+# bad
+def on_exception(action)
+  @on_exception=action
+end
+
+# good
+attr_writer :on_exception
+----
+
+==== IgnoreClassMethods: false (default)
+
+[source,ruby]
+----
+# bad
+def self.foo
+  @foo
+end
+
+# good
+class << self
+  attr_reader :foo
+end
+----
+
+==== IgnoreClassMethods: true
+
+[source,ruby]
+----
+# good
+def self.foo
+  @foo
+end
+----
+
+==== AllowedMethods: ['allowed_method']
+
+[source,ruby]
+----
+# good
+def allowed_method
+  @foo
+end
+----
+
 === Configurable attributes
 
 |===
@@ -11621,7 +12288,7 @@ end
 | Boolean
 
 | AllowDSLWriters
-| `false`
+| `true`
 | Boolean
 
 | IgnoreClassMethods
@@ -11845,7 +12512,7 @@ end
 
 === References
 
-* https://rubystyle.guide#one-line-cases
+* https://rubystyle.guide#no-when-semicolons
 
 == Style/WhileUntilDo
 
@@ -11957,7 +12624,7 @@ end
 | Yes
 | Yes
 | 0.9
-| 0.36
+| 1.19
 |===
 
 This cop can check for array literals made up of word-like
@@ -11965,6 +12632,9 @@ strings, that are not using the %w() syntax.
 
 Alternatively, it can check for uses of the %w() syntax, in projects
 which do not want to include that syntax.
+
+NOTE: When using the `percent` style, %w() arrays containing a space
+will be registered as offenses.
 
 Configuration option: MinSize
 If set, arrays with fewer elements than this value will not trigger the
@@ -11982,6 +12652,9 @@ array of 2 or fewer elements.
 
 # bad
 ['foo', 'bar', 'baz']
+
+# bad (contains spaces)
+%w[foo\ bar baz\ quux]
 ----
 
 ==== EnforcedStyle: brackets
@@ -11993,6 +12666,9 @@ array of 2 or fewer elements.
 
 # bad
 %w[foo bar baz]
+
+# good (contains spaces)
+['foo bar', 'baz quux']
 ----
 
 === Configurable attributes

@@ -40,8 +40,12 @@ module RuboCop
       #     to `true` allows the presence of parentheses in such a method call
       #     even with arguments.
       #
-      # NOTE: Parens are required around a method with arguments when inside an
-      # endless method definition (>= Ruby 3.0).
+      # NOTE: Parentheses are still allowed in cases where omitting them
+      # results in ambiguous or syntactically incorrect code. For example,
+      # parentheses are required around a method with arguments when inside an
+      # endless method definition introduced in Ruby 3.0.  Parentheses are also
+      # allowed when forwarding arguments with the triple-dot syntax introduced
+      # in Ruby 2.7 as omitting them starts an endless range.
       #
       # @example EnforcedStyle: require_parentheses (default)
       #
@@ -78,6 +82,30 @@ module RuboCop
       #
       #   # good
       #   foo.enforce strict: true
+      #
+      #   # good
+      #   # Allows parens for calls that won't produce valid Ruby or be ambiguous.
+      #   model.validate strict(true)
+      #
+      #   # good
+      #   # Allows parens for calls that won't produce valid Ruby or be ambiguous.
+      #   yield path, File.basename(path)
+      #
+      #   # good
+      #   # Operators methods calls with parens
+      #   array&.[](index)
+      #
+      #   # good
+      #   # Operators methods without parens, if you prefer
+      #   array.[] index
+      #
+      #   # good
+      #   # Operators methods calls with parens
+      #   array&.[](index)
+      #
+      #   # good
+      #   # Operators methods without parens, if you prefer
+      #   array.[] index
       #
       # @example IgnoreMacros: true (default)
       #
@@ -146,6 +174,22 @@ module RuboCop
       #
       #   # good
       #   Array 1
+      #
+      # @example AllowParenthesesInStringInterpolation: false (default)
+      #
+      #   # bad
+      #   "#{t('this.is.bad')}"
+      #
+      #   # good
+      #   "#{t 'this.is.better'}"
+      #
+      # @example AllowParenthesesInStringInterpolation: true
+      #
+      #   # good
+      #   "#{t('this.is.good')}"
+      #
+      #   # good
+      #   "#{t 'this.is.also.good'}"
       class MethodCallWithArgsParentheses < Base
         require_relative 'method_call_with_args_parentheses/omit_parentheses'
         require_relative 'method_call_with_args_parentheses/require_parentheses'
@@ -158,7 +202,7 @@ module RuboCop
         extend AutoCorrector
 
         def self.autocorrect_incompatible_with
-          [Style::NestedParenthesizedCalls]
+          [Style::NestedParenthesizedCalls, Style::RescueModifier]
         end
 
         def on_send(node)

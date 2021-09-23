@@ -144,8 +144,7 @@ module RuboCop
           sclass: :class_singleton
         }.freeze
 
-        MSG = '`%<category>s` is supposed to appear before ' \
-              '`%<previous>s`.'
+        MSG = '`%<category>s` is supposed to appear before `%<previous>s`.'
 
         # @!method dynamic_constant?(node)
         def_node_matcher :dynamic_constant?, <<~PATTERN
@@ -159,11 +158,8 @@ module RuboCop
           walk_over_nested_class_definition(class_node) do |node, category|
             index = expected_order.index(category)
             if index < previous
-              message = format(MSG, category: category,
-                                    previous: expected_order[previous])
-              add_offense(node, message: message) do |corrector|
-                autocorrect(corrector, node)
-              end
+              message = format(MSG, category: category, previous: expected_order[previous])
+              add_offense(node, message: message) { |corrector| autocorrect(corrector, node) }
             end
             previous = index
           end
@@ -254,9 +250,7 @@ module RuboCop
           classification = classify(node)
           sibling_class = classify(sibling)
 
-          ignore?(sibling_class) ||
-            classification == sibling_class ||
-            dynamic_constant?(node)
+          ignore?(sibling_class) || classification == sibling_class || dynamic_constant?(node)
         end
 
         def humanize_node(node)
@@ -270,7 +264,8 @@ module RuboCop
 
         def source_range_with_comment(node)
           begin_pos, end_pos =
-            if node.def_type? && !node.method?(:initialize) || node.send_type? && node.def_modifier?
+            if (node.def_type? && !node.method?(:initialize)) ||
+               (node.send_type? && node.def_modifier?)
               start_node = find_visibility_start(node) || node
               end_node = find_visibility_end(node) || node
               [begin_pos_with_comment(start_node),
@@ -295,10 +290,14 @@ module RuboCop
           (node.first_line - 1).downto(1) do |annotation_line|
             break unless (comment = processed_source.comment_at_line(annotation_line))
 
-            first_comment = comment
+            first_comment = comment if whole_line_comment_at_line?(annotation_line)
           end
 
           start_line_position(first_comment || node)
+        end
+
+        def whole_line_comment_at_line?(line)
+          /\A\s*#/.match?(processed_source.lines[line - 1])
         end
 
         def start_line_position(node)

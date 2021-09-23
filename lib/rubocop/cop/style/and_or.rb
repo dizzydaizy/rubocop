@@ -7,6 +7,11 @@ module RuboCop
       # `||` instead. It can be configured to check only in conditions or in
       # all contexts.
       #
+      # @safety
+      #   Auto-correction is unsafe because there is a different operator precedence
+      #   between logical operators (`&&` and `||`) and semantic operators (`and` and `or`),
+      #   and that might change the behaviour.
+      #
       # @example EnforcedStyle: always
       #   # bad
       #   foo.save and return
@@ -94,7 +99,9 @@ module RuboCop
 
           return unless correctable_send?(node)
 
-          corrector.replace(whitespace_before_arg(node), '(')
+          whitespace_before_arg_range = whitespace_before_arg(node)
+          corrector.remove(whitespace_before_arg_range)
+          corrector.insert_before(whitespace_before_arg_range, '(')
           corrector.insert_after(node.last_argument, ')')
         end
 

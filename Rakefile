@@ -4,6 +4,7 @@
 # and started before any application code is loaded.
 require 'simplecov' if ENV['COVERAGE']
 
+desc 'Check for no pending changelog entries before release'
 task release: 'changelog:check_clean' # Before task is required
 
 require 'bundler'
@@ -21,18 +22,9 @@ require 'rubocop/rake_task'
 Dir['tasks/**/*.rake'].each { |t| load t }
 
 desc 'Run RuboCop over itself'
-RuboCop::RakeTask.new(:internal_investigation).tap do |task|
-  if RUBY_ENGINE == 'ruby' &&
-     !/mswin|msys|mingw|cygwin|bccwin|wince|emc/.match?(RbConfig::CONFIG['host_os'])
-    task.options = %w[--parallel]
-  end
-end
+RuboCop::RakeTask.new(:internal_investigation)
 
-task default: %i[
-  documentation_syntax_check
-  spec ascii_spec
-  internal_investigation
-]
+task default: %i[documentation_syntax_check spec ascii_spec internal_investigation]
 
 require 'yard'
 YARD::Rake::YardocTask.new
@@ -51,9 +43,7 @@ task :bench_cop, %i[cop srcpath times] do |_task, args|
   cop_class = if cop_name.include?('/')
                 Cop::Registry.all.find { |klass| klass.cop_name == cop_name }
               else
-                Cop::Registry.all.find do |klass|
-                  klass.cop_name[/[a-zA-Z]+$/] == cop_name
-                end
+                Cop::Registry.all.find { |klass| klass.cop_name[/[a-zA-Z]+$/] == cop_name }
               end
   raise "No such cop: #{cop_name}" if cop_class.nil?
 
@@ -68,8 +58,7 @@ task :bench_cop, %i[cop srcpath times] do |_task, args|
             [src_path]
           end
 
-  puts "(#{pluralize(iterations, 'iteration')}, " \
-    "#{pluralize(files.size, 'file')})"
+  puts "(#{pluralize(iterations, 'iteration')}, #{pluralize(files.size, 'file')})"
 
   ruby_version = RuboCop::TargetRuby.supported_versions.last
   srcs = files.map { |file| ProcessedSource.from_file(file, ruby_version) }
@@ -103,32 +92,30 @@ task documentation_syntax_check: :yard_for_generate_documentation do
     end
 
     examples.each do |example|
-      begin
-        buffer = Parser::Source::Buffer.new('<code>', 1)
-        buffer.source = example.text
+      buffer = Parser::Source::Buffer.new('<code>', 1)
+      buffer.source = example.text
 
-        # Ruby 2.6 or higher does not support a syntax used in
-        # `Lint/UselessElseWithoutRescue` cop's example.
-        parser = if cop == RuboCop::Cop::Lint::UselessElseWithoutRescue
-                   Parser::Ruby25.new(RuboCop::AST::Builder.new)
-                 # Ruby 2.7 raises a syntax error in
-                 # `Lint/CircularArgumentReference` cop's example.
-                 elsif cop == RuboCop::Cop::Lint::CircularArgumentReference
-                   Parser::Ruby26.new(RuboCop::AST::Builder.new)
-                 # Ruby 3.0 raises a syntax error in
-                 # `Lint/NumberedParameterAssignment` cop's example.
-                 elsif cop == RuboCop::Cop::Lint::NumberedParameterAssignment
-                   Parser::Ruby27.new(RuboCop::AST::Builder.new)
-                 else
-                   Parser::Ruby30.new(RuboCop::AST::Builder.new)
-                 end
-        parser.diagnostics.all_errors_are_fatal = true
-        parser.parse(buffer)
-      rescue Parser::SyntaxError => e
-        path = example.object.file
-        puts "#{path}: Syntax Error in an example. #{e}"
-        ok = false
-      end
+      # Ruby 2.6 or higher does not support a syntax used in
+      # `Lint/UselessElseWithoutRescue` cop's example.
+      parser = if cop == RuboCop::Cop::Lint::UselessElseWithoutRescue
+                 Parser::Ruby25.new(RuboCop::AST::Builder.new)
+               # Ruby 2.7 raises a syntax error in
+               # `Lint/CircularArgumentReference` cop's example.
+               elsif cop == RuboCop::Cop::Lint::CircularArgumentReference
+                 Parser::Ruby26.new(RuboCop::AST::Builder.new)
+               # Ruby 3.0 raises a syntax error in
+               # `Lint/NumberedParameterAssignment` cop's example.
+               elsif cop == RuboCop::Cop::Lint::NumberedParameterAssignment
+                 Parser::Ruby27.new(RuboCop::AST::Builder.new)
+               else
+                 Parser::Ruby30.new(RuboCop::AST::Builder.new)
+               end
+      parser.diagnostics.all_errors_are_fatal = true
+      parser.parse(buffer)
+    rescue Parser::SyntaxError => e
+      path = example.object.file
+      puts "#{path}: Syntax Error in an example. #{e}"
+      ok = false
     end
   end
   abort unless ok

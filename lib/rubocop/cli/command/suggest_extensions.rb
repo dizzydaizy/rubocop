@@ -19,7 +19,7 @@ module RuboCop
 
           puts
           puts 'Tip: Based on detected gems, the following '\
-            'RuboCop extension libraries might be helpful:'
+               'RuboCop extension libraries might be helpful:'
 
           extensions.sort.each do |extension|
             puts "  * #{extension} (https://github.com/rubocop/#{extension})"
@@ -27,8 +27,8 @@ module RuboCop
 
           puts
           puts 'You can opt out of this message by adding the following to your config '\
-            '(see https://docs.rubocop.org/rubocop/extensions.html#extension-suggestions '\
-            'for more options):'
+               '(see https://docs.rubocop.org/rubocop/extensions.html#extension-suggestions '\
+               'for more options):'
           puts '  AllCops:'
           puts '    SuggestExtensions: false'
 
@@ -43,7 +43,8 @@ module RuboCop
           # 2. When given RuboCop options that it doesn't make sense for
           # 3. For all formatters except specified in `INCLUDED_FORMATTERS'`
           ENV['CI'] ||
-            @options[:only] || @options[:debug] || @options[:list_target_files] || @options[:out] ||
+            @options[:only] || @options[:debug] || @options[:list_target_files] ||
+            @options[:out] || @options[:stdin] ||
             !INCLUDED_FORMATTERS.include?(current_formatter)
         end
 

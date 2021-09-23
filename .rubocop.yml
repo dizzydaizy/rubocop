@@ -5,6 +5,7 @@ require:
   - rubocop/cop/internal_affairs
   - rubocop-performance
   - rubocop-rspec
+  - rubocop-rake
 
 AllCops:
   NewCops: enable
@@ -14,7 +15,7 @@ AllCops:
     - 'tmp/**/*'
     - '.git/**/*'
     - 'bin/*'
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.5
   SuggestExtensions: false
 
 Naming/PredicateName:
@@ -46,19 +47,9 @@ Layout/EndOfLine:
 
 Layout/ClassStructure:
   Enabled: true
-  Categories:
-    module_inclusion:
-      - include
-      - prepend
-      - extend
-  ExpectedOrder:
-      - module_inclusion
-      - constants
-      - public_class_methods
-      - initializer
-      - instance_methods
-      - protected_methods
-      - private_methods
+
+Layout/RedundantLineBreak:
+  Enabled: true
 
 Layout/TrailingWhitespace:
   AllowInHeredoc: false
@@ -89,9 +80,6 @@ Lint/UselessAccessModifier:
     - 'def_matcher'
     - 'def_node_matcher'
 
-Lint/BooleanSymbol:
-  Enabled: false
-
 Metrics/BlockLength:
   Exclude:
     - 'Rakefile'
@@ -106,6 +94,14 @@ Metrics/ClassLength:
 Metrics/ModuleLength:
   Exclude:
     - 'spec/**/*.rb'
+
+Naming/InclusiveLanguage:
+  FlaggedTerms:
+    offence:
+      Suggestions:
+        - offense
+  Exclude:
+    - lib/rubocop/cop/naming/inclusive_language.rb
 
 RSpec/FilePath:
   Exclude:
@@ -129,9 +125,22 @@ Performance/CollectionLiteralInLoop:
     - 'Rakefile'
     - 'spec/**/*.rb'
 
+Performance/EndWith:
+  SafeMultiline: false
+
+Performance/StartWith:
+  SafeMultiline: false
+
 RSpec/StubbedMock:
   Enabled: false
 
 InternalAffairs/ExampleDescription:
   Include:
     - 'spec/rubocop/cop/**/*.rb'
+
+InternalAffairs/UndefinedConfig:
+  Include:
+    - 'lib/rubocop/cop/**/*.rb'
+  Exclude:
+    - 'lib/rubocop/cop/correctors/**/*.rb'
+    - 'lib/rubocop/cop/mixin/**/*.rb'

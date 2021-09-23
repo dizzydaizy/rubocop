@@ -8,8 +8,7 @@ module RuboCop
 
       # Match literal regex characters, not including anchors, character
       # classes, alternatives, groups, repetitions, references, etc
-      LITERAL_REGEX =
-        %r{[\w\s\-,"'!#%&<>=;:`~/]|\\[^AbBdDgGhHkpPRwWXsSzZ0-9]}.freeze
+      LITERAL_REGEX = %r{[\w\s\-,"'!#%&<>=;:`~/]|\\[^AbBdDgGhHkpPRwWXsSzZ0-9]}.freeze
 
       module_function
 
@@ -28,8 +27,7 @@ module RuboCop
       end
 
       def parentheses?(node)
-        node.loc.respond_to?(:end) && node.loc.end &&
-          node.loc.end.is?(')')
+        node.loc.respond_to?(:end) && node.loc.end && node.loc.end.is?(')')
       end
 
       def add_parentheses(node, corrector)
@@ -38,15 +36,23 @@ module RuboCop
         elsif node.arguments.empty?
           corrector.insert_after(node, '()')
         else
-          corrector.replace(args_begin(node), '(')
+          args_begin = args_begin(node)
+
+          corrector.remove(args_begin)
+          corrector.insert_before(args_begin, '(')
           corrector.insert_after(args_end(node), ')')
         end
       end
 
       def args_begin(node)
         loc = node.loc
-        selector =
-          node.super_type? || node.yield_type? ? loc.keyword : loc.selector
+        selector = if node.super_type? || node.yield_type?
+                     loc.keyword
+                   elsif node.def_type? || node.defs_type?
+                     loc.name
+                   else
+                     loc.selector
+                   end
         selector.end.resize(1)
       end
 
@@ -120,9 +126,7 @@ module RuboCop
       end
 
       def same_line?(node1, node2)
-        node1.respond_to?(:loc) &&
-          node2.respond_to?(:loc) &&
-          node1.loc.line == node2.loc.line
+        node1.respond_to?(:loc) && node2.respond_to?(:loc) && node1.loc.line == node2.loc.line
       end
 
       def indent(node)
@@ -130,9 +134,7 @@ module RuboCop
       end
 
       def to_supported_styles(enforced_style)
-        enforced_style
-          .sub(/^Enforced/, 'Supported')
-          .sub('Style', 'Styles')
+        enforced_style.sub(/^Enforced/, 'Supported').sub('Style', 'Styles')
       end
 
       private

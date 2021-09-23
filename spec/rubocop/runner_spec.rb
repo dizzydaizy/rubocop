@@ -17,9 +17,7 @@ RSpec.describe RuboCop::Runner, :isolated_environment do
 
     let(:runner) { described_class.new({}, RuboCop::ConfigStore.new) }
 
-    before do
-      create_empty_file('example.rb')
-    end
+    before { create_empty_file('example.rb') }
 
     def interrupt(pid)
       Process.kill 'INT', pid
@@ -79,9 +77,7 @@ RSpec.describe RuboCop::Runner, :isolated_environment do
   describe '#run' do
     subject(:runner) { described_class.new(options, RuboCop::ConfigStore.new) }
 
-    before do
-      create_file('example.rb', source)
-    end
+    before { create_file('example.rb', source) }
 
     let(:options) { { formatters: [['progress', formatter_output_path]] } }
 
@@ -191,12 +187,7 @@ RSpec.describe RuboCop::Runner, :isolated_environment do
   describe '#run with cops autocorrecting each-other' do
     let(:source_file_path) { create_file('example.rb', source) }
 
-    let(:options) do
-      {
-        auto_correct: true,
-        formatters: [['progress', formatter_output_path]]
-      }
-    end
+    let(:options) { { auto_correct: true, formatters: [['progress', formatter_output_path]] } }
 
     context 'with two conflicting cops' do
       subject(:runner) do
@@ -226,7 +217,7 @@ RSpec.describe RuboCop::Runner, :isolated_environment do
           end.to raise_error(
             RuboCop::Runner::InfiniteCorrectionLoop,
             "Infinite loop detected in #{source_file_path} and caused by " \
-              'Test/ClassMustBeAModuleCop -> Test/ModuleMustBeAClassCop'
+            'Test/ClassMustBeAModuleCop -> Test/ModuleMustBeAClassCop'
           )
         end
       end
@@ -246,7 +237,7 @@ RSpec.describe RuboCop::Runner, :isolated_environment do
           end.to raise_error(
             RuboCop::Runner::InfiniteCorrectionLoop,
             "Infinite loop detected in #{source_file_path} and caused by " \
-              'Test/ClassMustBeAModuleCop -> Test/ModuleMustBeAClassCop'
+            'Test/ClassMustBeAModuleCop -> Test/ModuleMustBeAClassCop'
           )
         end
       end
@@ -282,8 +273,8 @@ RSpec.describe RuboCop::Runner, :isolated_environment do
           end.to raise_error(
             RuboCop::Runner::InfiniteCorrectionLoop,
             "Infinite loop detected in #{source_file_path} and caused by " \
-              'Test/ClassMustBeAModuleCop, Test/AtoB ' \
-              '-> Test/ModuleMustBeAClassCop, Test/BtoA'
+            'Test/ClassMustBeAModuleCop, Test/AtoB ' \
+            '-> Test/ModuleMustBeAClassCop, Test/BtoA'
           )
         end
       end
@@ -317,7 +308,7 @@ RSpec.describe RuboCop::Runner, :isolated_environment do
             end.to raise_error(
               RuboCop::Runner::InfiniteCorrectionLoop,
               "Infinite loop detected in #{source_file_path} and caused by " \
-                'Test/AtoB -> Test/BtoC -> Test/CtoA'
+              'Test/AtoB -> Test/BtoC -> Test/CtoA'
             )
           end
         end

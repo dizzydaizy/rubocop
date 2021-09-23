@@ -36,9 +36,7 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission, :config do
           ^^^^^^^^^^^^^^^ Script file #{filename} doesn't have execute permission.
         RUBY
 
-        expect_correction(<<~RUBY)
-          #!/usr/bin/ruby
-        RUBY
+        expect_no_corrections
         expect(file.stat.executable?).to be_truthy
       end
 
@@ -63,9 +61,7 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission, :config do
   end
 
   context 'with file permission 0755' do
-    before do
-      FileUtils.chmod(0755, file.path)
-    end
+    before { FileUtils.chmod(0755, file.path) }
 
     it 'accepts with shebang line' do
       File.write(file.path, source)

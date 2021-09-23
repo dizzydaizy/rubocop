@@ -145,8 +145,7 @@ RSpec.describe RuboCop::Cop::Lint::DuplicateMethods, :config do
       RUBY
     end
 
-    it 'registers an offense for a duplicate instance method in separate ' \
-       "#{type} blocks" do
+    it "registers an offense for a duplicate instance method in separate #{type} blocks" do
       expect_offense(<<~RUBY, 'dups.rb')
         #{opening_line}
           def some_method
@@ -162,8 +161,7 @@ RSpec.describe RuboCop::Cop::Lint::DuplicateMethods, :config do
       RUBY
     end
 
-    it 'registers an offense for a duplicate class method in separate ' \
-       "#{type} blocks" do
+    it "registers an offense for a duplicate class method in separate #{type} blocks" do
       expect_offense(<<~RUBY, 'test.rb')
         #{opening_line}
           def self.some_method
@@ -397,8 +395,7 @@ RSpec.describe RuboCop::Cop::Lint::DuplicateMethods, :config do
   include_examples('in scope', 'class_eval block', 'A.class_eval do')
 
   %w[class module].each do |type|
-    it 'registers an offense for duplicate class methods with named receiver ' \
-       "in #{type}" do
+    it "registers an offense for duplicate class methods with named receiver in #{type}" do
       expect_offense(<<~RUBY, 'src.rb')
         #{type} A
           def A.some_method
@@ -508,6 +505,41 @@ RSpec.describe RuboCop::Cop::Lint::DuplicateMethods, :config do
       end
       b = Class.new do
         def foo
+        end
+      end
+    RUBY
+  end
+
+  it 'does not register for the same method in different scopes within `class << self`' do
+    expect_no_offenses(<<~RUBY, 'test.rb')
+      class A
+        class << self
+          def foo
+          end
+
+          class B
+            def foo
+            end
+          end
+        end
+      end
+    RUBY
+  end
+
+  it 'properly registers and offense when deeply nested' do
+    expect_offense(<<~RUBY, 'test.rb')
+      module A
+        module B
+          class C
+            class << self
+              def foo
+              end
+
+              def foo
+              ^^^^^^^ Method `A::B::C.foo` is defined at both test.rb:5 and test.rb:8.
+              end
+            end
+          end
         end
       end
     RUBY

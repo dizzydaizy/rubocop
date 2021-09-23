@@ -9,6 +9,21 @@ module RuboCop
       # that use boolean as a return value. When using `EnforcedStyle: forbidden`, double negation
       # should be forbidden always.
       #
+      # NOTE: when `something` is a boolean value
+      # `!!something` and `!something.nil?` are not the same thing.
+      # As you're unlikely to write code that can accept values of any type
+      # this is rarely a problem in practice.
+      #
+      # @safety
+      #   Autocorrection is unsafe when the value is `false`, because the result
+      #   of the expression will change.
+      #
+      #   [source,ruby]
+      #   ----
+      #   !!false     #=> false
+      #   !false.nil? #=> true
+      #   ----
+      #
       # @example
       #   # bad
       #   !!something
@@ -27,11 +42,6 @@ module RuboCop
       #   def foo?
       #     !!return_value
       #   end
-      #
-      # Please, note that when something is a boolean value
-      # !!something and !something.nil? are not the same thing.
-      # As you're unlikely to write code that can accept values of any type
-      # this is rarely a problem in practice.
       class DoubleNegation < Base
         include ConfigurableEnforcedStyle
         extend AutoCorrector
@@ -62,7 +72,7 @@ module RuboCop
         def end_of_method_definition?(node)
           return false unless (def_node = find_def_node_from_ascendant(node))
 
-          last_child = def_node.child_nodes.last
+          last_child = find_last_child(def_node.body)
 
           last_child.last_line == node.last_line
         end
@@ -72,6 +82,17 @@ module RuboCop
           return parent if parent.def_type? || parent.defs_type?
 
           find_def_node_from_ascendant(node.parent)
+        end
+
+        def find_last_child(node)
+          case node.type
+          when :rescue
+            find_last_child(node.body)
+          when :ensure
+            find_last_child(node.child_nodes.first)
+          else
+            node.child_nodes.last
+          end
         end
       end
     end

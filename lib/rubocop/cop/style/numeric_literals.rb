@@ -31,8 +31,7 @@ module RuboCop
         include IntegerNode
         extend AutoCorrector
 
-        MSG = 'Use underscores(_) as thousands separator and ' \
-              'separate every 3 digits with them.'
+        MSG = 'Use underscores(_) as thousands separator and separate every 3 digits with them.'
         DELIMITER_REGEXP = /[eE.]/.freeze
 
         # The parameter is called MinDigits (meaning the minimum number of
@@ -59,18 +58,15 @@ module RuboCop
 
           case int
           when /^\d+$/
-            return unless (self.min_digits = int.size + 1)
-
-            register_offense(node)
+            register_offense(node) { self.min_digits = int.size + 1 }
           when /\d{4}/, short_group_regex
-            return unless (self.config_to_allow_offenses = { 'Enabled' => false })
-
-            register_offense(node)
+            register_offense(node) { self.config_to_allow_offenses = { 'Enabled' => false } }
           end
         end
 
-        def register_offense(node)
+        def register_offense(node, &_block)
           add_offense(node) do |corrector|
+            yield
             corrector.replace(node, format_number(node))
           end
         end
@@ -95,12 +91,7 @@ module RuboCop
         # @param int_part [String]
         def format_int_part(int_part)
           int_part = Integer(int_part)
-          formatted_int = int_part
-                          .abs
-                          .to_s
-                          .reverse
-                          .gsub(/...(?=.)/, '\&_')
-                          .reverse
+          formatted_int = int_part.abs.to_s.reverse.gsub(/...(?=.)/, '\&_').reverse
           formatted_int.insert(0, '-') if int_part.negative?
           formatted_int
         end

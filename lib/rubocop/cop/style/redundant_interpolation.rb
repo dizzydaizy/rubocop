@@ -56,7 +56,7 @@ module RuboCop
           first_child = node.children.first
 
           variable_interpolation?(first_child) ||
-            first_child.send_type? && !first_child.operator_method?
+            (first_child.send_type? && !first_child.operator_method?)
         end
 
         def interpolation?(node)
@@ -72,8 +72,7 @@ module RuboCop
         end
 
         def embedded_in_percent_array?(node)
-          node.parent&.array_type? &&
-            percent_literal?(node.parent)
+          node.parent&.array_type? && percent_literal?(node.parent)
         end
 
         def autocorrect_variable_interpolation(corrector, embedded_node, node)

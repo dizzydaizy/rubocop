@@ -36,15 +36,14 @@ module RuboCop
         extend AutoCorrector
 
         MSG = 'Avoid single-line method definitions.'
+        NOT_SUPPORTED_ENDLESS_METHOD_BODY_TYPES = %i[return break next].freeze
 
         def on_def(node)
           return unless node.single_line?
           return if node.endless?
           return if allow_empty? && !node.body
 
-          add_offense(node) do |corrector|
-            autocorrect(corrector, node)
-          end
+          add_offense(node) { |corrector| autocorrect(corrector, node) }
         end
         alias on_defs on_def
 
@@ -64,36 +63,42 @@ module RuboCop
 
         def correct_to_endless?(body_node)
           return false if target_ruby_version < 3.0
-
-          endless_method_config = config.for_cop('Style/EndlessMethod')
-
-          return false unless endless_method_config['Enabled']
-          return false if endless_method_config['EnforcedStyle'] == 'disallow'
+          return false if disallow_endless_method_style?
           return false unless body_node
+          return false if body_node.parent.assignment_method? ||
+                          NOT_SUPPORTED_ENDLESS_METHOD_BODY_TYPES.include?(body_node.type)
 
           !(body_node.begin_type? || body_node.kwbegin_type?)
         end
 
         def correct_to_multiline(corrector, node)
-          each_part(node.body) do |part|
-            LineBreakCorrector.break_line_before(
-              range: part, node: node, corrector: corrector,
-              configured_width: configured_indentation_width
-            )
+          if (body = node.body) && body.begin_type? && body.parenthesized_call?
+            break_line_before(corrector, node, body)
+          else
+            each_part(body) do |part|
+              break_line_before(corrector, node, part)
+            end
           end
 
-          LineBreakCorrector.break_line_before(
-            range: node.loc.end, node: node, corrector: corrector,
-            indent_steps: 0, configured_width: configured_indentation_width
-          )
+          break_line_before(corrector, node, node.loc.end, indent_steps: 0)
 
           move_comment(node, corrector)
         end
 
         def correct_to_endless(corrector, node)
+          self_receiver = node.self_receiver? ? 'self.' : ''
           arguments = node.arguments.any? ? node.arguments.source : '()'
-          replacement = "def #{node.method_name}#{arguments} = #{node.body.source}"
+          body_source = method_body_source(node.body)
+          replacement = "def #{self_receiver}#{node.method_name}#{arguments} = #{body_source}"
+
           corrector.replace(node, replacement)
+        end
+
+        def break_line_before(corrector, node, range, indent_steps: 1)
+          LineBreakCorrector.break_line_before(
+            range: range, node: node, corrector: corrector,
+            configured_width: configured_indentation_width, indent_steps: indent_steps
+          )
         end
 
         def each_part(body)
@@ -111,6 +116,28 @@ module RuboCop
             eol_comment: processed_source.comment_at_line(node.source_range.line),
             node: node, corrector: corrector
           )
+        end
+
+        def method_body_source(method_body)
+          if require_parentheses?(method_body)
+            arguments_source = method_body.arguments.map(&:source).join(', ')
+            body_source = "#{method_body.method_name}(#{arguments_source})"
+
+            method_body.receiver ? "#{method_body.receiver.source}.#{body_source}" : body_source
+          else
+            method_body.source
+          end
+        end
+
+        def require_parentheses?(method_body)
+          method_body.send_type? && !method_body.arguments.empty? && !method_body.comparison_method?
+        end
+
+        def disallow_endless_method_style?
+          endless_method_config = config.for_cop('Style/EndlessMethod')
+          return false unless endless_method_config['Enabled']
+
+          endless_method_config['EnforcedStyle'] == 'disallow'
         end
       end
     end

@@ -50,11 +50,9 @@ module RuboCop
       #
       #   alias bar foo
       class DuplicateMethods < Base
-        MSG = 'Method `%<method>s` is defined at both %<defined>s and ' \
-              '%<current>s.'
+        MSG = 'Method `%<method>s` is defined at both %<defined>s and %<current>s.'
 
-        RESTRICT_ON_SEND = %i[alias_method attr_reader attr_writer
-                              attr_accessor attr].freeze
+        RESTRICT_ON_SEND = %i[alias_method attr_reader attr_writer attr_accessor attr].freeze
 
         def initialize(config = nil, options = nil)
           super
@@ -137,11 +135,14 @@ module RuboCop
         def found_instance_method(node, name)
           return unless (scope = node.parent_module_name)
 
-          if scope =~ /\A#<Class:(.*)>\Z/
-            found_method(node, "#{Regexp.last_match(1)}.#{name}")
-          else
-            found_method(node, "#{scope}##{name}")
-          end
+          # Humanize the scope
+          scope = scope.sub(
+            /(?:(?<name>.*)::)#<Class:\k<name>>|#<Class:(?<name>.*)>(?:::)?/,
+            '\k<name>.'
+          )
+          scope << '#' unless scope.end_with?('.')
+
+          found_method(node, "#{scope}#{name}")
         end
 
         def found_method(node, method_name)
@@ -192,9 +193,7 @@ module RuboCop
             namespace, mod_name = *ancestor.defined_module
             loop do
               if mod_name == const_name
-                return qualified_name(ancestor.parent_module_name,
-                                      namespace,
-                                      mod_name)
+                return qualified_name(ancestor.parent_module_name, namespace, mod_name)
               end
 
               break if namespace.nil?

@@ -8,6 +8,25 @@ module RuboCop
       # that comma to be present. Blocks with more than one argument never
       # require a trailing comma.
       #
+      # @safety
+      #   This cop is unsafe because a trailing comma can indicate there are
+      #   more parameters that are not used.
+      #
+      #   For example:
+      #   [source,ruby]
+      #   ----
+      #   # with a trailing comma
+      #   {foo: 1, bar: 2, baz: 3}.map {|key,| key }
+      #   #=> [:foo, :bar, :baz]
+      #
+      #   # without a trailing comma
+      #   {foo: 1, bar: 2, baz: 3}.map {|key| key }
+      #   #=> [[:foo, 1], [:bar, 2], [:baz, 3]]
+      #   ----
+      #
+      #   This can be fixed by replacing the trailing comma with a placeholder
+      #   argument (such as `|key, _value|`).
+      #
       # @example
       #   # bad
       #   add { |foo, bar,| foo + bar }
@@ -52,9 +71,7 @@ module RuboCop
 
           last_comma_pos = last_comma(node).pos
 
-          add_offense(last_comma_pos) do |corrector|
-            corrector.replace(last_comma_pos, '')
-          end
+          add_offense(last_comma_pos) { |corrector| corrector.replace(last_comma_pos, '') }
         end
 
         private
@@ -78,9 +95,7 @@ module RuboCop
         def argument_tokens(node)
           tokens = processed_source.tokens_within(node)
           pipes = tokens.select { |token| token.type == :tPIPE }
-          begin_pos, end_pos = pipes.map do |pipe|
-            tokens.index(pipe)
-          end
+          begin_pos, end_pos = pipes.map { |pipe| tokens.index(pipe) }
 
           tokens[begin_pos + 1..end_pos - 1]
         end

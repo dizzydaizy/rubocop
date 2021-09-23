@@ -8,7 +8,7 @@ RSpec.describe RuboCop::Lockfile, :isolated_environment do
   let(:lockfile) do
     create_file('Gemfile.lock', <<~LOCKFILE)
       GEM
-        gems:
+        specs:
           rake (13.0.1)
           rspec (3.9.0)
           dep (1.0.0)

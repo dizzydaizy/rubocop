@@ -143,8 +143,7 @@ module RuboCop
 
         def expected_column(left_paren, elements)
           if line_break_after_left_paren?(left_paren, elements)
-            source_indent = processed_source
-                            .line_indentation(first_argument_line(elements))
+            source_indent = processed_source.line_indentation(first_argument_line(elements))
             new_indent    = source_indent - indentation_width
 
             new_indent.negative? ? 0 : new_indent
@@ -156,17 +155,17 @@ module RuboCop
         end
 
         def all_elements_aligned?(elements)
-          elements
-            .map { |e| e.loc.column }
-            .uniq
-            .count == 1
+          elements.flat_map do |e|
+            if e.hash_type?
+              e.each_pair.map { |pair| pair.loc.column }
+            else
+              e.loc.column
+            end
+          end.uniq.count == 1
         end
 
         def first_argument_line(elements)
-          elements
-            .first
-            .loc
-            .first_line
+          elements.first.loc.first_line
         end
 
         def correct_column_candidates(node, left_paren)
@@ -181,11 +180,7 @@ module RuboCop
           if correct_column == left_paren.column
             MSG_ALIGN
           else
-            format(
-              MSG_INDENT,
-              expected: correct_column,
-              actual: right_paren.column
-            )
+            format(MSG_INDENT, expected: correct_column, actual: right_paren.column)
           end
         end
 

@@ -6,6 +6,10 @@ module RuboCop
       # This cop checks for optional arguments to methods
       # that do not come at the end of the argument list.
       #
+      # @safety
+      #   This cop is unsafe because changing a method signature will
+      #   implicitly change behaviour.
+      #
       # @example
       #   # bad
       #   def foo(a = 1, b, c)
@@ -18,13 +22,10 @@ module RuboCop
       #   def foobar(a = 1, b = 2, c = 3)
       #   end
       class OptionalArguments < Base
-        MSG = 'Optional arguments should appear at the end ' \
-              'of the argument list.'
+        MSG = 'Optional arguments should appear at the end of the argument list.'
 
         def on_def(node)
-          each_misplaced_optional_arg(node.arguments) do |argument|
-            add_offense(argument)
-          end
+          each_misplaced_optional_arg(node.arguments) { |argument| add_offense(argument) }
         end
 
         private

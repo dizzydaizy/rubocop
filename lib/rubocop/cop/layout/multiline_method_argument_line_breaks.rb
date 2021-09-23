@@ -6,6 +6,9 @@ module RuboCop
       # This cop ensures that each argument in a multi-line method call
       # starts on a separate line.
       #
+      # NOTE: this cop does not move the first argument, if you want that to
+      # be on a separate line, see `Layout/FirstMethodArgumentLineBreak`.
+      #
       # @example
       #
       #   # bad
@@ -23,8 +26,7 @@ module RuboCop
         include MultilineElementLineBreaks
         extend AutoCorrector
 
-        MSG = 'Each argument in a multi-line method call must start ' \
-          'on a separate line.'
+        MSG = 'Each argument in a multi-line method call must start on a separate line.'
 
         def on_send(node)
           return if node.method?(:[]=)

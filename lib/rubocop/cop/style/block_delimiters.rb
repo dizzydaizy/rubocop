@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module RuboCop
   module Cop
     module Style
       # Check for uses of braces or do/end around single line or
       # multi-line blocks.
+      #
+      # Methods that can be either procedural or functional and cannot be
+      # categorised from their usage alone is ignored.
+      # `lambda`, `proc`, and `it` are their defaults.
+      # Additional methods can be added to the `IgnoredMethods`.
       #
       # @example EnforcedStyle: line_count_based (default)
       #   # bad - single line block
@@ -132,9 +138,21 @@ module RuboCop
       #     puts foo
       #   end
       #
+      # @example IgnoredMethods: ['lambda', 'proc', 'it' ] (default)
+      #
+      #   # good
+      #   foo = lambda do |x|
+      #     puts "Hello, #{x}"
+      #   end
+      #
+      #   foo = lambda do |x|
+      #     x * 100
+      #   end
+      #
       class BlockDelimiters < Base
         include ConfigurableEnforcedStyle
         include IgnoredMethods
+        include RangeHelp
         extend AutoCorrector
 
         ALWAYS_BRACES_MESSAGE = 'Prefer `{...}` over `do...end` for blocks.'
@@ -174,7 +192,7 @@ module RuboCop
           if node.braces?
             replace_braces_with_do_end(corrector, node.loc)
           else
-            replace_do_end_with_braces(corrector, node.loc)
+            replace_do_end_with_braces(corrector, node)
           end
         end
 
@@ -231,10 +249,16 @@ module RuboCop
           corrector.insert_before(e, ' ') unless whitespace_before?(e)
           corrector.insert_after(b, ' ') unless whitespace_after?(b)
           corrector.replace(b, 'do')
+
+          if (comment = processed_source.comment_at_line(e.line))
+            move_comment_before_block(corrector, comment, loc.node, e)
+          end
+
           corrector.replace(e, 'end')
         end
 
-        def replace_do_end_with_braces(corrector, loc)
+        def replace_do_end_with_braces(corrector, node)
+          loc = node.loc
           b = loc.begin
           e = loc.end
 
@@ -242,6 +266,8 @@ module RuboCop
 
           corrector.replace(b, '{')
           corrector.replace(e, '}')
+
+          corrector.wrap(node.body, "begin\n", "\nend") if begin_required?(node)
         end
 
         def whitespace_before?(range)
@@ -250,6 +276,21 @@ module RuboCop
 
         def whitespace_after?(range, length = 1)
           /\s/.match?(range.source_buffer.source[range.begin_pos + length, 1])
+        end
+
+        def move_comment_before_block(corrector, comment, block_node, closing_brace)
+          range = block_node.chained? ? end_of_chain(block_node.parent).source_range : closing_brace
+          comment_range = range_between(range.end_pos, comment.loc.expression.end_pos)
+          corrector.remove(range_with_surrounding_space(range: comment_range, side: :right))
+          corrector.insert_after(range, "\n")
+
+          corrector.insert_before(block_node, "#{comment.text}\n")
+        end
+
+        def end_of_chain(node)
+          return node unless node.chained?
+
+          end_of_chain(node.parent)
         end
 
         def get_blocks(node, &block)
@@ -376,7 +417,14 @@ module RuboCop
         def array_or_range?(node)
           node.array_type? || node.range_type?
         end
+
+        def begin_required?(block_node)
+          # If the block contains `rescue` or `ensure`, it needs to be wrapped in
+          # `begin`...`end` when changing `do-end` to `{}`.
+          block_node.each_child_node(:rescue, :ensure).any? && !block_node.single_line?
+        end
       end
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

@@ -10,7 +10,7 @@ module RuboCop
       MSG = 'Space found before %<token>s.'
 
       def on_new_investigation
-        each_missing_space(processed_source.tokens) do |token, pos_before|
+        each_missing_space(processed_source.sorted_tokens) do |token, pos_before|
           add_offense(pos_before, message: format(MSG, token: kind(token))) do |corrector|
             PunctuationCorrector.remove_space(corrector, pos_before)
           end
@@ -25,8 +25,7 @@ module RuboCop
           next unless space_missing?(token1, token2)
           next if space_required_after?(token1)
 
-          pos_before_punctuation = range_between(token1.end_pos,
-                                                 token2.begin_pos)
+          pos_before_punctuation = range_between(token1.end_pos, token2.begin_pos)
 
           yield token2, pos_before_punctuation
         end

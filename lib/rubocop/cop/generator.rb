@@ -24,6 +24,11 @@ module RuboCop
               # `SupportedStyle` and unique configuration, there needs to be examples.
               # Examples must have valid Ruby syntax. Do not use upticks.
               #
+              # @safety
+              #   Delete this section if the cop is not unsafe (`Safe: false` or
+              #   `SafeAutoCorrect: false`), or use it to explain how the cop is
+              #   unsafe.
+              #
               # @example EnforcedStyle: bar (default)
               #   # Description of the `bar` style.
               #
@@ -104,11 +109,10 @@ module RuboCop
 
       CONFIGURATION_ADDED_MESSAGE =
         '[modify] A configuration for the cop is added into ' \
-          '%<configuration_file_path>s.'
+        '%<configuration_file_path>s.'
 
-      def initialize(name, github_user, output: $stdout)
+      def initialize(name, output: $stdout)
         @badge = Badge.parse(name)
-        @github_user = github_user
         @output = output
         return if badge.qualified?
 
@@ -124,10 +128,7 @@ module RuboCop
       end
 
       def inject_require(root_file_path: 'lib/rubocop.rb')
-        RequireFileInjector.new(
-          source_path: source_path,
-          root_file_path: root_file_path
-        ).inject
+        RequireFileInjector.new(source_path: source_path, root_file_path: root_file_path).inject
       end
 
       def inject_config(config_file_path: 'config/default.yml',
@@ -145,17 +146,19 @@ module RuboCop
 
       def todo
         <<~TODO
-          Do 3 steps:
-            1. Add an entry to the "New features" section in CHANGELOG.md,
-               e.g. "Add new `#{badge}` cop. ([@#{github_user}][])"
-            2. Modify the description of #{badge} in config/default.yml
-            3. Implement your new cop in the generated file!
+          Do 4 steps:
+            1. Modify the description of #{badge} in config/default.yml
+            2. Implement your new cop in the generated file!
+            3. Commit your new cop with a message such as
+               e.g. "Add new `#{badge}` cop."
+            4. Run `bundle exec rake changelog:new` to generate a changelog entry
+               for your new cop.
         TODO
       end
 
       private
 
-      attr_reader :badge, :github_user, :output
+      attr_reader :badge, :output
 
       def write_unless_file_exists(path, contents)
         if File.exist?(path)

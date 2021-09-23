@@ -50,9 +50,7 @@ module RuboCop
       end
 
       def aligned_with_any_line?(line_ranges, range, indent = nil, &predicate)
-        line_ranges.any? do |line_nos|
-          aligned_with_line?(line_nos, range, indent, &predicate)
-        end
+        line_ranges.any? { |line_nos| aligned_with_line?(line_nos, range, indent, &predicate) }
       end
 
       def aligned_with_line?(line_nos, range, indent = nil)
@@ -95,7 +93,15 @@ module RuboCop
       end
 
       def aligned_assignment?(range, line)
-        range.source[-1] == '=' && line[range.last_column - 1] == '='
+        (range.source[-1] == '=' && line[range.last_column - 1] == '=') ||
+          aligned_with_append_operator?(range, line)
+      end
+
+      def aligned_with_append_operator?(range, line)
+        last_column = range.last_column
+
+        (range.source == '<<' && line[last_column - 1] == '=') ||
+          (range.source[-1] == '=' && line[(last_column - 2)..(last_column - 1)] == '<<')
       end
 
       def aligned_identical?(range, line)
@@ -103,15 +109,13 @@ module RuboCop
       end
 
       def aligned_with_assignment(token, line_range)
-        token_line_indent    = processed_source
-                               .line_indentation(token.line)
+        token_line_indent    = processed_source.line_indentation(token.line)
         assignment_lines     = relevant_assignment_lines(line_range)
         relevant_line_number = assignment_lines[1]
 
         return :none unless relevant_line_number
 
-        relevant_indent = processed_source
-                          .line_indentation(relevant_line_number)
+        relevant_indent = processed_source.line_indentation(relevant_line_number)
 
         return :none if relevant_indent < token_line_indent
 
@@ -144,8 +148,7 @@ module RuboCop
       # rubocop:disable Metrics/PerceivedComplexity, Metrics/MethodLength
       def relevant_assignment_lines(line_range)
         result                        = []
-        original_line_indent          = processed_source
-                                        .line_indentation(line_range.first)
+        original_line_indent          = processed_source.line_indentation(line_range.first)
         relevant_line_indent_at_level = true
 
         line_range.each do |line_number|
@@ -161,8 +164,7 @@ module RuboCop
                                    current_line_indent == original_line_indent
 
           unless blank_line
-            relevant_line_indent_at_level = \
-              current_line_indent == original_line_indent
+            relevant_line_indent_at_level = current_line_indent == original_line_indent
           end
         end
 

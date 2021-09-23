@@ -150,11 +150,6 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
       expect_no_offenses("['-', '----']")
     end
 
-    # Bug: https://github.com/rubocop/rubocop/issues/4481
-    it 'does not register an offense in an ambiguous block context' do
-      expect_no_offenses('foo ["bar", "baz"] { qux }')
-    end
-
     it 'registers an offense in a non-ambiguous block context' do
       expect_offense(<<~RUBY)
         foo(['bar', 'baz']) { qux }
@@ -292,8 +287,7 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
         %w(a b c d)
       RUBY
 
-      expect(cop.config_to_allow_offenses).to eq('EnforcedStyle' => 'percent',
-                                                 'MinSize' => 4)
+      expect(cop.config_to_allow_offenses).to eq('EnforcedStyle' => 'percent', 'MinSize' => 4)
     end
 
     it 'detects when the cop must be disabled to avoid offenses' do
@@ -321,8 +315,35 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
       #   time, which suppresses the bug we are checking for
       _investigate(cop1, parse_source("['g', 'h']"))
       _investigate(cop2, parse_source('%w(a b c)'))
-      expect(cop2.config_to_allow_offenses).to eq('EnforcedStyle' => 'percent',
-                                                  'MinSize' => 3)
+      expect(cop2.config_to_allow_offenses).to eq('EnforcedStyle' => 'percent', 'MinSize' => 3)
+    end
+
+    it 'registers an offense for a %w() array containing spaces' do
+      expect_offense(<<~'RUBY')
+        %w(one\ two three\ four)
+        ^^^^^^^^^^^^^^^^^^^^^^^^ Use `['one two', 'three four']` for an array of words.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        ['one two', 'three four']
+      RUBY
+    end
+
+    it 'does not register an offense for a %w() array containing non word characters' do
+      expect_no_offenses(<<~RUBY)
+        %w(% %i %I %q %Q %r %s %w %W %x)
+      RUBY
+    end
+
+    it 'corrects properly when there is an extra trailing comma' do
+      expect_offense(<<~RUBY)
+        A = ["one", "two",]
+            ^^^^^^^^^^^^^^^ Use `%w` or `%W` for an array of words.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        A = %w(one two)
+      RUBY
     end
   end
 
@@ -345,10 +366,14 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
       expect_no_offenses("['foo', 'bar', 'foo-bar']")
     end
 
+    it 'does not register an offense for arrays of strings with spaces' do
+      expect_no_offenses("['foo bar', 'baz quux']")
+    end
+
     it 'registers an offense for a %w() array' do
       expect_offense(<<~RUBY)
         %w(one two three)
-        ^^^^^^^^^^^^^^^^^ Use `[]` for an array of words.
+        ^^^^^^^^^^^^^^^^^ Use `['one', 'two', 'three']` for an array of words.
       RUBY
 
       expect_correction(<<~RUBY)
@@ -359,7 +384,7 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
     it 'autocorrects a %w() array which uses single quotes' do
       expect_offense(<<~RUBY)
         %w(one's two's three's)
-        ^^^^^^^^^^^^^^^^^^^^^^^ Use `[]` for an array of words.
+        ^^^^^^^^^^^^^^^^^^^^^^^ Use `["one's", "two's", "three's"]` for an array of words.
       RUBY
 
       expect_correction(<<~RUBY)
@@ -370,7 +395,7 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
     it 'autocorrects a %W() array which uses escapes' do
       expect_offense(<<~'RUBY')
         %W(\n \t \b \v \f)
-        ^^^^^^^^^^^^^^^^^^ Use `[]` for an array of words.
+        ^^^^^^^^^^^^^^^^^^ Use `["\n", "\t", "\b", "\v", "\f"]` for an array of words.
       RUBY
 
       expect_correction(<<~'RUBY')
@@ -381,7 +406,7 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
     it 'autocorrects a %w() array which uses string with hyphen' do
       expect_offense(<<~RUBY)
         %w(foo bar foo-bar)
-        ^^^^^^^^^^^^^^^^^^^ Use `[]` for an array of words.
+        ^^^^^^^^^^^^^^^^^^^ Use `['foo', 'bar', 'foo-bar']` for an array of words.
       RUBY
 
       expect_correction(<<~RUBY)
@@ -392,7 +417,7 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
     it 'autocorrects a %W() array which uses string with hyphen' do
       expect_offense(<<~'RUBY')
         %W(foo bar #{foo}-bar)
-        ^^^^^^^^^^^^^^^^^^^^^^ Use `[]` for an array of words.
+        ^^^^^^^^^^^^^^^^^^^^^^ Use `['foo', 'bar', "#{foo}-bar"]` for an array of words.
       RUBY
 
       expect_correction(<<~'RUBY')
@@ -403,7 +428,7 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
     it 'autocorrects a %W() array which uses string interpolation' do
       expect_offense(<<~'RUBY')
         %W(#{foo}bar baz)
-        ^^^^^^^^^^^^^^^^^ Use `[]` for an array of words.
+        ^^^^^^^^^^^^^^^^^ Use `["#{foo}bar", 'baz']` for an array of words.
       RUBY
 
       expect_correction(<<~'RUBY')

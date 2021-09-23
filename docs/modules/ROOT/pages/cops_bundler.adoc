@@ -71,15 +71,24 @@ end
 | 0.85
 |===
 
-Add a comment describing each gem in your Gemfile.
+Each gem in the Gemfile should have a comment explaining
+its purpose in the project, or the reason for its version
+or source.
 
-Optionally, the "OnlyFor" configuration
+The optional "OnlyFor" configuration array
 can be used to only register offenses when the gems
 use certain options or have version specifiers.
-Add "version_specifiers" and/or the gem option names
-you want to check.
 
-A useful use-case is to enforce a comment when using
+When "version_specifiers" is included, a comment
+will be enforced if the gem has any version specifier.
+
+When "restrictive_version_specifiers" is included, a comment
+will be enforced if the gem has a version specifier that
+holds back the version of the gem.
+
+For any other value in the array, a comment will be enforced for
+a gem if an option by the same name is present.
+A useful use case is to enforce a comment when using
 options that change the source of a gem:
 
 - `bitbucket`
@@ -89,7 +98,8 @@ options that change the source of a gem:
 - `source`
 
 For a full list of options supported by bundler,
-you can check the https://bundler.io/man/gemfile.5.html[official documentation].
+see https://bundler.io/man/gemfile.5.html
+.
 
 === Examples
 
@@ -116,6 +126,22 @@ gem 'foo'
 gem 'foo', '< 2.1'
 
 # good
+
+# Version 2.1 introduces breaking change baz
+gem 'foo', '< 2.1'
+----
+
+==== OnlyFor: ['restrictive_version_specifiers']
+
+[source,ruby]
+----
+# bad
+
+gem 'foo', '< 2.1'
+
+# good
+
+gem 'foo', '>= 1.0'
 
 # Version 2.1 introduces breaking change baz
 gem 'foo', '< 2.1'
@@ -158,6 +184,152 @@ gem 'bar', '< 2.1'
 | Array
 |===
 
+== Bundler/GemFilename
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Enabled
+| Yes
+| No
+| 1.20
+| -
+|===
+
+This cop verifies that a project contains Gemfile or gems.rb file and correct
+associated lock file based on the configuration.
+
+=== Examples
+
+==== EnforcedStyle: Gemfile (default)
+
+[source,ruby]
+----
+# bad
+Project contains gems.rb and gems.locked files
+
+# bad
+Project contains Gemfile and gems.locked file
+
+# good
+Project contains Gemfile and Gemfile.lock
+----
+
+==== EnforcedStyle: gems.rb
+
+[source,ruby]
+----
+# bad
+Project contains Gemfile and Gemfile.lock files
+
+# bad
+Project contains gems.rb and Gemfile.lock file
+
+# good
+Project contains gems.rb and gems.locked files
+----
+
+=== Configurable attributes
+
+|===
+| Name | Default value | Configurable values
+
+| EnforcedStyle
+| `Gemfile`
+| `Gemfile`, `gems.rb`
+
+| Include
+| `+**/Gemfile+`, `+**/gems.rb+`, `+**/Gemfile.lock+`, `+**/gems.locked+`
+| Array
+|===
+
+== Bundler/GemVersion
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Disabled
+| Yes
+| No
+| 1.14
+| -
+|===
+
+Enforce that Gem version specifications or a commit reference (branch,
+ref, or tag) are either required or forbidden.
+
+=== Examples
+
+==== EnforcedStyle: required (default)
+
+[source,ruby]
+----
+# bad
+gem 'rubocop'
+
+# good
+gem 'rubocop', '~> 1.12'
+
+# good
+gem 'rubocop', '>= 1.10.0'
+
+# good
+gem 'rubocop', '>= 1.5.0', '< 1.10.0'
+
+# good
+gem 'rubocop', branch: 'feature-branch'
+
+# good
+gem 'rubocop', ref: '74b5bfbb2c4b6fd6cdbbc7254bd7084b36e0c85b'
+
+# good
+gem 'rubocop', tag: 'v1.17.0'
+----
+
+==== EnforcedStyle: forbidden
+
+[source,ruby]
+----
+# good
+gem 'rubocop'
+
+# bad
+gem 'rubocop', '~> 1.12'
+
+# bad
+gem 'rubocop', '>= 1.10.0'
+
+# bad
+gem 'rubocop', '>= 1.5.0', '< 1.10.0'
+
+# bad
+gem 'rubocop', branch: 'feature-branch'
+
+# bad
+gem 'rubocop', ref: '74b5bfbb2c4b6fd6cdbbc7254bd7084b36e0c85b'
+
+# bad
+gem 'rubocop', tag: 'v1.17.0'
+----
+
+=== Configurable attributes
+
+|===
+| Name | Default value | Configurable values
+
+| EnforcedStyle
+| `required`
+| `required`, `forbidden`
+
+| Include
+| `+**/*.gemfile+`, `+**/Gemfile+`, `+**/gems.rb+`
+| Array
+
+| AllowedGems
+| `[]`
+| Array
+|===
+
 == Bundler/InsecureProtocolSource
 
 |===
@@ -170,18 +342,18 @@ gem 'bar', '< 2.1'
 | -
 |===
 
-The symbol argument `:gemcutter`, `:rubygems`, and `:rubyforge`
-are deprecated. So please change your source to URL string that
-'https://rubygems.org' if possible, or 'http://rubygems.org' if not.
+Passing symbol arguments to `source` (e.g. `source :rubygems`) is
+deprecated because they default to using HTTP requests. Instead, specify
+`'https://rubygems.org'` if possible, or `'http://rubygems.org'` if not.
 
-This autocorrect will replace these symbols with 'https://rubygems.org'.
-Because it is secure, HTTPS request is strongly recommended. And in
-most use cases HTTPS will be fine.
+When autocorrecting, this cop will replace symbol arguments with
+`'https://rubygems.org'`.
 
-However, it don't replace all `sources` of `http://` with `https://`.
-For example, when specifying an internal gem server using HTTP on the
-intranet, a use case where HTTPS cannot be specified was considered.
-Consider using HTTP only if you cannot use HTTPS.
+This cop will not replace existing sources that use `http://`. This may
+be necessary where HTTPS is not available. For example, where using an
+internal gem server via an intranet, or where HTTPS is prohibited.
+However, you should strongly prefer `https://` where possible, as it is
+more secure.
 
 === Examples
 
@@ -194,7 +366,7 @@ source :rubyforge
 
 # good
 source 'https://rubygems.org' # strongly recommended
-source 'http://rubygems.org'
+source 'http://rubygems.org' # use only if HTTPS is unavailable
 ----
 
 === Configurable attributes

@@ -13,6 +13,10 @@ module RuboCop
       # Auto-correction removes comments from `end` keyword and keeps comments
       # for `class`, `module`, `def` and `begin` above the keyword.
       #
+      # @safety
+      #   Auto-correction is unsafe because it may remove a comment that is
+      #   meaningful.
+      #
       # @example
       #   # bad
       #   if condition
@@ -40,29 +44,23 @@ module RuboCop
         include RangeHelp
         extend AutoCorrector
 
-        MSG = 'Do not place comments on the same line as the ' \
-              '`%<keyword>s` keyword.'
+        MSG = 'Do not place comments on the same line as the `%<keyword>s` keyword.'
+
+        KEYWORDS = %w[begin class def end module].freeze
+        KEYWORD_REGEXES = KEYWORDS.map { |w| /^\s*#{w}\s/ }.freeze
+
+        ALLOWED_COMMENTS = %w[:nodoc: :yields: rubocop:disable rubocop:todo].freeze
+        ALLOWED_COMMENT_REGEXES = ALLOWED_COMMENTS.map { |c| /#\s*#{c}/ }.freeze
 
         def on_new_investigation
           processed_source.comments.each do |comment|
-            next unless (match = line(comment).match(/(?<keyword>\S+).*#/)) && offensive?(comment)
+            next unless offensive?(comment) && (match = line(comment).match(/(?<keyword>\S+).*#/))
 
             register_offense(comment, match[:keyword])
           end
         end
 
         private
-
-        KEYWORDS = %w[begin class def end module].freeze
-        KEYWORD_REGEXES = KEYWORDS.map { |w| /^\s*#{w}\s/ }.freeze
-
-        ALLOWED_COMMENTS = %w[
-          :nodoc:
-          :yields:
-          rubocop:disable
-          rubocop:todo
-        ].freeze
-        ALLOWED_COMMENT_REGEXES = ALLOWED_COMMENTS.map { |c| /#\s*#{c}/ }.freeze
 
         def register_offense(comment, matched_keyword)
           add_offense(comment, message: format(MSG, keyword: matched_keyword)) do |corrector|

@@ -8,12 +8,10 @@ module RuboCop
       # transforming the keys of a hash, and tries to use a simpler & faster
       # call to `transform_keys` instead.
       #
-      # This can produce false positives if we are transforming an enumerable
-      # of key-value-like pairs that isn't actually a hash, e.g.:
-      # `[[k1, v1], [k2, v2], ...]`
-      #
-      # This cop should only be enabled on Ruby version 2.5 or newer
-      # (`transform_keys` was added in Ruby 2.5.)
+      # @safety
+      #   This cop is unsafe, as it can produce false positives if we are
+      #   transforming an enumerable of key-value-like pairs that isn't actually
+      #   a hash, e.g.: `[[k1, v1], [k2, v2], ...]`
       #
       # @example
       #   # bad
@@ -27,10 +25,7 @@ module RuboCop
       #   {a: 1, b: 2}.transform_keys { |k| k.to_s }
       class HashTransformKeys < Base
         include HashTransformMethod
-        extend TargetRubyVersion
         extend AutoCorrector
-
-        minimum_target_ruby_version 2.5
 
         # @!method on_bad_each_with_object(node)
         def_node_matcher :on_bad_each_with_object, <<~PATTERN

@@ -97,17 +97,13 @@ module RuboCop
         def check_backtick_literal(node, message)
           return if allowed_backtick_literal?(node)
 
-          add_offense(node, message: message) do |corrector|
-            autocorrect(corrector, node)
-          end
+          add_offense(node, message: message) { |corrector| autocorrect(corrector, node) }
         end
 
         def check_percent_x_literal(node, message)
           return if allowed_percent_x_literal?(node)
 
-          add_offense(node, message: message) do |corrector|
-            autocorrect(corrector, node)
-          end
+          add_offense(node, message: message) { |corrector| autocorrect(corrector, node) }
         end
 
         def autocorrect(corrector, node)
@@ -165,7 +161,7 @@ module RuboCop
         end
 
         def preferred_delimiter
-          (command_delimiter || default_delimiter).split('')
+          (command_delimiter || default_delimiter).chars
         end
 
         def command_delimiter
@@ -177,8 +173,7 @@ module RuboCop
         end
 
         def preferred_delimiters_config
-          config.for_cop('Style/PercentLiteralDelimiters') \
-            ['PreferredDelimiters']
+          config.for_cop('Style/PercentLiteralDelimiters') ['PreferredDelimiters']
         end
       end
     end

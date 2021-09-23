@@ -6,6 +6,11 @@ module RuboCop
       # This cop checks for `:true` and `:false` symbols.
       # In most cases it would be a typo.
       #
+      # @safety
+      #   Autocorrection is unsafe for this cop because code relying
+      #   on `:true` or `:false` symbols will break when those are
+      #   changed to actual booleans.
+      #
       # @example
       #
       #   # bad
@@ -24,8 +29,7 @@ module RuboCop
       class BooleanSymbol < Base
         extend AutoCorrector
 
-        MSG = 'Symbol with a boolean name - ' \
-              'you probably meant to use `%<boolean>s`.'
+        MSG = 'Symbol with a boolean name - you probably meant to use `%<boolean>s`.'
 
         # @!method boolean_symbol?(node)
         def_node_matcher :boolean_symbol?, '(sym {:true :false})'

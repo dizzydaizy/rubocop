@@ -81,10 +81,7 @@ module RuboCop
         end
 
         def width_message(indentation_width)
-          format(
-            WIDTH_MSG,
-            indentation_width: indentation_width
-          )
+          format(WIDTH_MSG, indentation_width: indentation_width)
         end
 
         def line_too_long?(node)
@@ -126,8 +123,7 @@ module RuboCop
           body = heredoc_body(node)
           body_indent_level = indent_level(body)
           correct_indent_level = base_indent_level(node) + indentation_width
-          body.gsub(/^[^\S\r\n]{#{body_indent_level}}/,
-                    ' ' * correct_indent_level)
+          body.gsub(/^[^\S\r\n]{#{body_indent_level}}/, ' ' * correct_indent_level)
         end
 
         def indented_end(node)
@@ -145,13 +141,6 @@ module RuboCop
           base_line_num = node.loc.expression.line
           base_line = processed_source.lines[base_line_num - 1]
           indent_level(base_line)
-        end
-
-        def indent_level(str)
-          indentations = str.lines
-                            .map { |line| line[/^\s*/] }
-                            .reject { |line| line.end_with?("\n") }
-          indentations.empty? ? 0 : indentations.min_by(&:size).size
         end
 
         # Returns '~', '-' or nil

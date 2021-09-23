@@ -6,6 +6,11 @@ module RuboCop
       # This cop identifies places where `if-elsif` constructions
       # can be replaced with `case-when`.
       #
+      # @safety
+      #   This cop is unsafe. `case` statements use `===` for equality,
+      #   so if the original conditional used a different equality operator, the
+      #   behaviour may be different.
+      #
       # @example
       #   # bad
       #   if status == :active
@@ -221,8 +226,7 @@ module RuboCop
           name = node.children[1].to_s
 
           # We can no be sure if, e.g. `C`, represents a constant or a class reference
-          name.length > 1 &&
-            name == name.upcase
+          name.length > 1 && name == name.upcase
         end
 
         def class_reference?(node)

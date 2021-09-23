@@ -5,17 +5,12 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'bump', require: false
-# memory_profiler 1.0.0 requires Ruby 2.5.0 or higher.
-# Please remove this branch when dropping support for Ruby 2.4.
-if RUBY_VERSION >= '2.5.0'
-  gem 'memory_profiler', platform: :mri
-else
-  gem 'memory_profiler', '<= 1.0.0', platform: :mri
-end
+gem 'memory_profiler', platform: :mri
 gem 'rake', '~> 13.0'
 gem 'rspec', '~> 3.7'
-gem 'rubocop-performance', '~> 1.10.0'
-gem 'rubocop-rspec', '~> 2.2.0'
+gem 'rubocop-performance', '~> 1.11.0'
+gem 'rubocop-rake', '~> 0.6.0'
+gem 'rubocop-rspec', '~> 2.5.0'
 # Workaround for cc-test-reporter with SimpleCov 0.18.
 # Stop upgrading SimpleCov until the following issue will be resolved.
 # https://github.com/codeclimate/test-reporter/issues/418

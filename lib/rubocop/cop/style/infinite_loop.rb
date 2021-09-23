@@ -5,9 +5,10 @@ module RuboCop
     module Style
       # Use `Kernel#loop` for infinite loops.
       #
-      # This cop is marked as unsafe as the rule does not necessarily
-      # apply if the body might raise a `StopIteration` exception; contrary to
-      # other infinite loops, `Kernel#loop` silently rescues that and returns `nil`.
+      # @safety
+      #   This cop is unsafe as the rule should not necessarily apply if the loop
+      #   body might raise a `StopIteration` exception; contrary to other infinite
+      #   loops, `Kernel#loop` silently rescues that and returns `nil`.
       #
       # @example
       #   # bad
@@ -62,9 +63,7 @@ module RuboCop
             referenced_after_loop?(var, range)
           end
 
-          add_offense(node.loc.keyword) do |corrector|
-            autocorrect(corrector, node)
-          end
+          add_offense(node.loc.keyword) { |corrector| autocorrect(corrector, node) }
         end
 
         def autocorrect(corrector, node)
@@ -107,8 +106,7 @@ module RuboCop
           else
             indentation = body.source_range.source_line[LEADING_SPACE]
 
-            ['loop do', body.source.gsub(/^/, configured_indent),
-             'end'].join("\n#{indentation}")
+            ['loop do', body.source.gsub(/^/, configured_indent), 'end'].join("\n#{indentation}")
           end
         end
 

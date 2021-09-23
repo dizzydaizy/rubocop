@@ -9,8 +9,7 @@ module RuboCop
     extend Forwardable
 
     # @api private
-    COMMON_PARAMS = %w[Exclude Include Severity inherit_mode
-                       AutoCorrect StyleGuide Details].freeze
+    COMMON_PARAMS = %w[Exclude Include Severity inherit_mode AutoCorrect StyleGuide Details].freeze
     # @api private
     INTERNAL_PARAMS = %w[Description StyleGuide
                          VersionAdded VersionChanged VersionRemoved
@@ -60,8 +59,7 @@ module RuboCop
     def validate_section_presence(name)
       return unless @config.key?(name) && @config[name].nil?
 
-      raise ValidationError,
-            "empty section #{name} found in #{smart_loaded_path}"
+      raise ValidationError, "empty section #{name} found in #{smart_loaded_path}"
     end
 
     private
@@ -83,11 +81,11 @@ module RuboCop
 
       msg = if last_version
               "RuboCop found unsupported Ruby version #{target_ruby_version} " \
-              "in #{source}. #{target_ruby_version}-compatible " \
-              "analysis was dropped after version #{last_version}."
+                "in #{source}. #{target_ruby_version}-compatible " \
+                "analysis was dropped after version #{last_version}."
             else
               'RuboCop found unknown Ruby version ' \
-              "#{target_ruby_version.inspect} in #{source}."
+                "#{target_ruby_version.inspect} in #{source}."
             end
 
       msg += "\nSupported versions: #{TargetRuby.supported_versions.join(', ')}"
@@ -106,12 +104,9 @@ module RuboCop
         # to do so than to pass the value around to various methods.
         next if name == 'inherit_mode'
 
-        suggestions = NameSimilarity.find_similar_names(name, Cop::Registry.global.map(&:cop_name))
-        suggestion = "Did you mean `#{suggestions.join('`, `')}`?" if suggestions.any?
-
         message = <<~MESSAGE.rstrip
-          unrecognized cop #{name} found in #{smart_loaded_path}
-          #{suggestion}
+          unrecognized cop or department #{name} found in #{smart_loaded_path}
+          #{suggestion(name)}
         MESSAGE
 
         unknown_cops << message
@@ -119,12 +114,27 @@ module RuboCop
       raise ValidationError, unknown_cops.join("\n") if unknown_cops.any?
     end
 
+    def suggestion(name)
+      registry = Cop::Registry.global
+      departments = registry.departments.map(&:to_s)
+      suggestions = NameSimilarity.find_similar_names(name, departments + registry.map(&:cop_name))
+      if suggestions.any?
+        "Did you mean `#{suggestions.join('`, `')}`?"
+      else
+        # Department names can contain slashes, e.g. Chef/Correctness, but there's no support for
+        # the concept of higher level departments in RuboCop. It's a flat structure. So if the user
+        # tries to configure a "top level department", we hint that it's the bottom level
+        # departments that should be configured.
+        suggestions = departments.select { |department| department.start_with?("#{name}/") }
+        "#{name} is not a department. Use `#{suggestions.join('`, `')}`." if suggestions.any?
+      end
+    end
+
     def validate_syntax_cop
       syntax_config = @config['Lint/Syntax']
       default_config = ConfigLoader.default_configuration['Lint/Syntax']
 
-      return unless syntax_config &&
-                    default_config.merge(syntax_config) != default_config
+      return unless syntax_config && default_config.merge(syntax_config) != default_config
 
       raise ValidationError,
             "configuration for Syntax cop found in #{smart_loaded_path}\n" \
@@ -133,8 +143,7 @@ module RuboCop
 
     def validate_new_cops_parameter
       new_cop_parameter = @config.for_all_cops['NewCops']
-      return if new_cop_parameter.nil? ||
-                NEW_COPS_VALUES.include?(new_cop_parameter)
+      return if new_cop_parameter.nil? || NEW_COPS_VALUES.include?(new_cop_parameter)
 
       message = "invalid #{new_cop_parameter} for `NewCops` found in" \
                 "#{smart_loaded_path}\n" \
@@ -183,8 +192,8 @@ module RuboCop
           next if validate_support_and_has_list(name, style, valid)
 
           msg = "invalid #{style_name} '#{style}' for #{name} found in " \
-            "#{smart_loaded_path}\n" \
-            "Valid choices are: #{valid.join(', ')}"
+                "#{smart_loaded_path}\n" \
+                "Valid choices are: #{valid.join(', ')}"
           raise ValidationError, msg
         end
       end
@@ -208,8 +217,7 @@ module RuboCop
     def reject_conflicting_safe_settings
       @config.each do |name, cop_config|
         next unless cop_config.is_a?(Hash)
-        next unless cop_config['Safe'] == false &&
-                    cop_config['SafeAutoCorrect'] == true
+        next unless cop_config['Safe'] == false && cop_config['SafeAutoCorrect'] == true
 
         msg = 'Unsafe cops cannot have a safe auto-correction ' \
               "(section #{name} in #{smart_loaded_path})"

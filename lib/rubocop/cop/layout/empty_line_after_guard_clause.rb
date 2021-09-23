@@ -38,38 +38,41 @@ module RuboCop
       class EmptyLineAfterGuardClause < Base
         include RangeHelp
         extend AutoCorrector
+        extend Util
 
         MSG = 'Add empty line after guard clause.'
         END_OF_HEREDOC_LINE = 1
 
         def on_if(node)
           return if correct_style?(node)
+          return if multiple_statements_on_line?(node)
 
-          if node.modifier_form? && last_argument_is_heredoc?(node)
-            heredoc_node = last_heredoc_argument(node)
-
-            return if next_line_empty?(heredoc_line(node, heredoc_node))
+          if node.modifier_form? && (heredoc_node = last_heredoc_argument(node))
+            return if next_line_empty_or_enable_directive_comment?(heredoc_line(node, heredoc_node))
 
             add_offense(heredoc_node.loc.heredoc_end) do |corrector|
               autocorrect(corrector, heredoc_node)
             end
           else
-            return if next_line_empty?(node.last_line)
+            return if next_line_empty_or_enable_directive_comment?(node.last_line)
 
-            add_offense(offense_location(node)) do |corrector|
-              autocorrect(corrector, node)
-            end
+            add_offense(offense_location(node)) { |corrector| autocorrect(corrector, node) }
           end
         end
 
         private
 
         def autocorrect(corrector, node)
-          node_range = if node.respond_to?(:heredoc?) && node.heredoc?
+          node_range = if heredoc?(node)
                          range_by_whole_lines(node.loc.heredoc_body)
                        else
                          range_by_whole_lines(node.source_range)
                        end
+
+          next_line = node_range.last_line + 1
+          if next_line_enable_directive_comment?(next_line)
+            node_range = processed_source.comment_at_line(next_line)
+          end
 
           corrector.insert_after(node_range, "\n")
         end
@@ -85,8 +88,21 @@ module RuboCop
           node.if_branch&.guard_clause?
         end
 
+        def next_line_empty_or_enable_directive_comment?(line)
+          return true if next_line_empty?(line)
+
+          next_line = line + 1
+          next_line_enable_directive_comment?(next_line) && next_line_empty?(next_line)
+        end
+
         def next_line_empty?(line)
           processed_source[line].blank?
+        end
+
+        def next_line_enable_directive_comment?(line)
+          return false unless (comment = processed_source.comment_at_line(line))
+
+          DirectiveComment.new(comment).enabled?
         end
 
         def next_line_rescue_or_ensure?(node)
@@ -110,19 +126,8 @@ module RuboCop
           next_sibling.if_type? && contains_guard_clause?(next_sibling)
         end
 
-        def last_argument_is_heredoc?(node)
-          last_children = node.if_branch
-          return false unless last_children&.send_type?
-
-          heredoc?(last_heredoc_argument(node))
-        end
-
         def last_heredoc_argument(node)
-          n = if node.respond_to?(:if_branch)
-                node.if_branch.children.last
-              else
-                node
-              end
+          n = last_heredoc_argument_node(node)
 
           return n if heredoc?(n)
           return unless n.respond_to?(:arguments)
@@ -135,10 +140,19 @@ module RuboCop
           return last_heredoc_argument(n.receiver) if n.respond_to?(:receiver)
         end
 
+        def last_heredoc_argument_node(node)
+          return node unless node.respond_to?(:if_branch)
+
+          if node.if_branch.and_type?
+            node.if_branch.children.first
+          else
+            node.if_branch.children.last
+          end
+        end
+
         def heredoc_line(node, heredoc_node)
           heredoc_body = heredoc_node.loc.heredoc_body
-          num_of_heredoc_lines =
-            heredoc_body.last_line - heredoc_body.first_line
+          num_of_heredoc_lines = heredoc_body.last_line - heredoc_body.first_line
 
           node.last_line + num_of_heredoc_lines + END_OF_HEREDOC_LINE
         end
@@ -153,6 +167,13 @@ module RuboCop
           else
             node
           end
+        end
+
+        def multiple_statements_on_line?(node)
+          parent = node.parent
+          return false unless parent
+
+          parent.begin_type? && parent.single_line?
         end
       end
     end

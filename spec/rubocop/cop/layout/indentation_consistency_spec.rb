@@ -9,6 +9,33 @@ RSpec.describe RuboCop::Cop::Layout::IndentationConsistency, :config do
         "#{}"
       RUBY
     end
+
+    it 'accepts when using access modifier at the top level' do
+      expect_no_offenses(<<~'RUBY')
+        public
+
+        def foo
+        end
+      RUBY
+    end
+
+    it 'registers and corrects an offense when using access modifier and dedented method definition ' \
+       'at the top level' do
+      expect_offense(<<~'RUBY')
+        public
+
+          def foo
+          ^^^^^^^ Inconsistent indentation detected.
+          end
+      RUBY
+
+      expect_correction(<<~'RUBY')
+        public
+
+        def foo
+        end
+      RUBY
+    end
   end
 
   context 'with if statement' do
@@ -202,8 +229,7 @@ RSpec.describe RuboCop::Cop::Layout::IndentationConsistency, :config do
       RUBY
     end
 
-    it 'accepts an if/else in assignment on next line with end aligned ' \
-       'with if' do
+    it 'accepts an if/else in assignment on next line with end aligned with if' do
       expect_no_offenses(<<~RUBY)
         var =
           if a
@@ -255,8 +281,7 @@ RSpec.describe RuboCop::Cop::Layout::IndentationConsistency, :config do
   end
 
   context 'with case' do
-    it 'registers an offense and corrects bad indentation ' \
-      'in a case/when body' do
+    it 'registers an offense and corrects bad indentation in a case/when body' do
       expect_offense(<<~RUBY)
         case a
         when b
@@ -275,8 +300,7 @@ RSpec.describe RuboCop::Cop::Layout::IndentationConsistency, :config do
       RUBY
     end
 
-    it 'registers an offense and corrects bad indentation ' \
-      'in a case/else body' do
+    it 'registers an offense and corrects bad indentation in a case/else body' do
       expect_offense(<<~RUBY)
         case a
         when b
@@ -616,7 +640,7 @@ RSpec.describe RuboCop::Cop::Layout::IndentationConsistency, :config do
       end
 
       it 'registers an offense and corrects bad indentation ' \
-        'in def but not for outdented public, protected, and private' do
+         'in def but not for outdented public, protected, and private' do
         expect_offense(<<~RUBY)
           class Test
           public
@@ -712,8 +736,7 @@ RSpec.describe RuboCop::Cop::Layout::IndentationConsistency, :config do
     end
 
     context 'even when there are no public methods' do
-      it 'registers an offense and corrects bad indentation ' \
-        'of private methods' do
+      it 'registers an offense and corrects bad indentation of private methods' do
         expect_offense(<<~RUBY)
           module Test
             private

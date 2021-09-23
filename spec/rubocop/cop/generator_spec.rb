@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe RuboCop::Cop::Generator do
-  subject(:generator) do
-    described_class.new(cop_identifier, 'your_id', output: stdout)
-  end
+  subject(:generator) { described_class.new(cop_identifier, output: stdout) }
 
   let(:stdout) { StringIO.new }
   let(:cop_identifier) { 'Style/FakeCop' }
@@ -26,6 +24,11 @@ RSpec.describe RuboCop::Cop::Generator do
               # TODO: Write cop description and example of bad / good code. For every
               # `SupportedStyle` and unique configuration, there needs to be examples.
               # Examples must have valid Ruby syntax. Do not use upticks.
+              #
+              # @safety
+              #   Delete this section if the cop is not unsafe (`Safe: false` or
+              #   `SafeAutoCorrect: false`), or use it to explain how the cop is
+              #   unsafe.
               #
               # @example EnforcedStyle: bar (default)
               #   # Description of the `bar` style.
@@ -81,18 +84,15 @@ RSpec.describe RuboCop::Cop::Generator do
         end
       RUBY
 
-      expect(File)
-        .to receive(:write)
-        .with('lib/rubocop/cop/style/fake_cop.rb', generated_source)
+      expect(File).to receive(:write).with('lib/rubocop/cop/style/fake_cop.rb', generated_source)
 
       generator.write_source
 
-      expect(stdout.string)
-        .to eq("[create] lib/rubocop/cop/style/fake_cop.rb\n")
+      expect(stdout.string).to eq("[create] lib/rubocop/cop/style/fake_cop.rb\n")
     end
 
     it 'refuses to overwrite existing files' do
-      new_cop = described_class.new('Layout/IndentationStyle', 'your_id')
+      new_cop = described_class.new('Layout/IndentationStyle')
 
       allow(new_cop).to receive(:exit!)
       expect { new_cop.write_source }
@@ -139,7 +139,7 @@ RSpec.describe RuboCop::Cop::Generator do
     end
 
     it 'refuses to overwrite existing files' do
-      new_cop = described_class.new('Layout/IndentationStyle', 'your_id')
+      new_cop = described_class.new('Layout/IndentationStyle')
 
       allow(new_cop).to receive(:exit!)
       expect { new_cop.write_spec }
@@ -153,18 +153,20 @@ RSpec.describe RuboCop::Cop::Generator do
   describe '#todo' do
     it 'provides a checklist for implementing the cop' do
       expect(generator.todo).to eql(<<~TODO)
-        Do 3 steps:
-          1. Add an entry to the "New features" section in CHANGELOG.md,
-             e.g. "Add new `Style/FakeCop` cop. ([@your_id][])"
-          2. Modify the description of Style/FakeCop in config/default.yml
-          3. Implement your new cop in the generated file!
+        Do 4 steps:
+          1. Modify the description of Style/FakeCop in config/default.yml
+          2. Implement your new cop in the generated file!
+          3. Commit your new cop with a message such as
+             e.g. "Add new `Style/FakeCop` cop."
+          4. Run `bundle exec rake changelog:new` to generate a changelog entry
+             for your new cop.
       TODO
     end
   end
 
   describe '.new' do
     it 'does not accept an unqualified cop' do
-      expect { described_class.new('FakeCop', 'your_id') }
+      expect { described_class.new('FakeCop') }
         .to raise_error(ArgumentError)
         .with_message('Specify a cop name with Department/Name style')
     end
@@ -316,16 +318,13 @@ RSpec.describe RuboCop::Cop::Generator do
     include FileHelper
 
     around do |example|
-      new_global = RuboCop::Cop::Registry.new(
-        [RuboCop::Cop::InternalAffairs::NodeDestructuring]
-      )
+      new_global = RuboCop::Cop::Registry.new([RuboCop::Cop::InternalAffairs::NodeDestructuring])
       RuboCop::Cop::Registry.with_temporary_global(new_global) { example.run }
     end
 
     let(:config) do
       config = RuboCop::ConfigStore.new
-      path = File.join(RuboCop::ConfigLoader::RUBOCOP_HOME,
-                       RuboCop::ConfigLoader::DOTFILE)
+      path = File.join(RuboCop::ConfigLoader::RUBOCOP_HOME, RuboCop::ConfigLoader::DOTFILE)
       config.options_config = path
       config
     end

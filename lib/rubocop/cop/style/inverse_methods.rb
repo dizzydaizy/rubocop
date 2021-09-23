@@ -5,11 +5,18 @@ module RuboCop
     module Style
       # This cop check for usages of not (`not` or `!`) called on a method
       # when an inverse of that method can be used instead.
+      #
       # Methods that can be inverted by a not (`not` or `!`) should be defined
-      # in `InverseMethods`
+      # in `InverseMethods`.
+      #
       # Methods that are inverted by inverting the return
       # of the block that is passed to the method should be defined in
-      # `InverseBlocks`
+      # `InverseBlocks`.
+      #
+      # @safety
+      #   This cop is unsafe because it cannot be guaranteed that the method
+      #   and its inverse method are both defined on receiver, and also are
+      #   actually inverse of each other.
       #
       # @example
       #   # bad
@@ -136,8 +143,7 @@ module RuboCop
         end
 
         def inverse_blocks
-          @inverse_blocks ||= cop_config['InverseBlocks']
-                              .merge(cop_config['InverseBlocks'].invert)
+          @inverse_blocks ||= cop_config['InverseBlocks'].merge(cop_config['InverseBlocks'].invert)
         end
 
         def negated?(node)
@@ -160,9 +166,7 @@ module RuboCop
         # `Integer > Numeric`.
         def possible_class_hierarchy_check?(lhs, rhs, method)
           CLASS_COMPARISON_METHODS.include?(method) &&
-            (camel_case_constant?(lhs) ||
-             (rhs.size == 1 &&
-              camel_case_constant?(rhs.first)))
+            (camel_case_constant?(lhs) || (rhs.size == 1 && camel_case_constant?(rhs.first)))
         end
 
         def camel_case_constant?(node)
@@ -174,8 +178,7 @@ module RuboCop
         end
 
         def remove_end_parenthesis(corrector, node, method, method_call)
-          return unless EQUALITY_METHODS.include?(method) ||
-                        method_call.parent.begin_type?
+          return unless EQUALITY_METHODS.include?(method) || method_call.parent.begin_type?
 
           corrector.remove(end_parentheses(node, method_call))
         end

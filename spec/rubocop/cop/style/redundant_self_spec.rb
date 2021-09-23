@@ -4,7 +4,7 @@ RSpec.describe RuboCop::Cop::Style::RedundantSelf, :config do
   it 'reports an offense a self receiver on an rvalue' do
     expect_offense(<<~RUBY)
       a = self.b
-          ^^^^^^ Redundant `self` detected.
+          ^^^^ Redundant `self` detected.
     RUBY
 
     expect_correction(<<~RUBY)
@@ -20,9 +20,58 @@ RSpec.describe RuboCop::Cop::Style::RedundantSelf, :config do
     expect_no_offenses('a = self.a || b || c')
   end
 
-  it 'does not report an offense when receiver and multiple assigned lvalue ' \
-     'have the same name' do
+  it 'does not report an offense when receiver and multiple assigned lvalue have the same name' do
     expect_no_offenses('a, b = self.a')
+  end
+
+  it 'does not report an offense when lvasgn name is used in `if`' do
+    expect_no_offenses('a = self.a if self.a')
+  end
+
+  it 'does not report an offense when masgn name is used in `if`' do
+    expect_no_offenses('a, b = self.a if self.a')
+  end
+
+  it 'does not report an offense when lvasgn name is used in `unless`' do
+    expect_no_offenses('a = self.a unless self.a')
+  end
+
+  it 'does not report an offense when masgn name is used in `unless`' do
+    expect_no_offenses('a, b = self.a unless self.a')
+  end
+
+  it 'does not report an offense when lvasgn name is used in `while`' do
+    expect_no_offenses('a = self.a while self.a')
+  end
+
+  it 'does not report an offense when masgn name is used in `while`' do
+    expect_no_offenses('a, b = self.a while self.a')
+  end
+
+  it 'does not report an offense when lvasgn name is used in `until`' do
+    expect_no_offenses('a = self.a until self.a')
+  end
+
+  it 'does not report an offense when masgn name is used in `until`' do
+    expect_no_offenses('a, b = self.a until self.a')
+  end
+
+  it 'does not report an offense when lvasgn name is nested below `if`' do
+    expect_no_offenses('a = self.a if foo(self.a)')
+  end
+
+  it 'reports an offense when a different lvasgn name is used in `if`' do
+    expect_offense(<<~RUBY)
+      a = x if self.b
+               ^^^^ Redundant `self` detected.
+    RUBY
+  end
+
+  it 'reports an offense when a different masgn name is used in `if`' do
+    expect_offense(<<~RUBY)
+      a, b, c = x if self.d
+                     ^^^^ Redundant `self` detected.
+    RUBY
   end
 
   it 'does not report an offense when self receiver in a method argument and ' \
@@ -164,7 +213,7 @@ RSpec.describe RuboCop::Cop::Style::RedundantSelf, :config do
     end
 
     it 'accepts a self receiver used to distinguish from an argument' \
-      ' when an inner method is defined' do
+       ' when an inner method is defined' do
       expect_no_offenses(<<~RUBY)
         def foo(bar)
           def inner_method(); end
@@ -223,7 +272,7 @@ RSpec.describe RuboCop::Cop::Style::RedundantSelf, :config do
   it 'reports an offense a self receiver of .call' do
     expect_offense(<<~RUBY)
       self.call
-      ^^^^^^^^^ Redundant `self` detected.
+      ^^^^ Redundant `self` detected.
     RUBY
 
     expect_correction(<<~RUBY)
@@ -233,5 +282,14 @@ RSpec.describe RuboCop::Cop::Style::RedundantSelf, :config do
 
   it 'accepts a self receiver of methods also defined on `Kernel`' do
     expect_no_offenses('self.open')
+  end
+
+  it 'accepts a self receiver on an lvalue of mlhs arguments' do
+    expect_no_offenses(<<~RUBY)
+      def do_something((a, b)) # This method expects Array that has 2 elements as argument.
+        self.a = a
+        self.b.some_method_call b
+      end
+    RUBY
   end
 end

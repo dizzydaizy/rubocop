@@ -18,6 +18,11 @@ module RuboCop
       # cop by default). Similarly, Rails' duration methods do not work well
       # with `Integer()` and can be ignored with `IgnoredMethods`.
       #
+      # @safety
+      #   Autocorrection is unsafe because it is not guaranteed that the
+      #   replacement `Kernel` methods are able to properly handle the
+      #   input if it is not a standard class.
+      #
       # @example
       #
       #   # bad
@@ -58,8 +63,9 @@ module RuboCop
         }.freeze
         MSG = 'Replace unsafe number conversion with number '\
               'class parsing, instead of using '\
-              '%<current>s, use stricter '\
-              '%<corrected_method>s.'
+              '`%<current>s`, use stricter '\
+              '`%<corrected_method>s`.'
+        CONVERSION_METHODS = %i[Integer Float Complex to_i to_f to_c].freeze
         METHODS = CONVERSION_METHOD_CLASS_MAPPING.keys.map(&:inspect).join(' ')
 
         # @!method to_method(node)
@@ -97,7 +103,7 @@ module RuboCop
 
         def handle_as_symbol(node)
           to_method_symbol(node) do |receiver, sym_node, to_method|
-            next if receiver.nil?
+            next if receiver.nil? || !node.arguments.one?
 
             message = format(
               MSG,
@@ -105,14 +111,15 @@ module RuboCop
               corrected_method: correct_sym_method(to_method)
             )
             add_offense(node, message: message) do |corrector|
+              remove_parentheses(corrector, node) if node.parenthesized?
+
               corrector.replace(sym_node, correct_sym_method(to_method))
             end
           end
         end
 
         def correct_method(node, receiver)
-          format(CONVERSION_METHOD_CLASS_MAPPING[node.method_name],
-                 number_object: receiver.source)
+          format(CONVERSION_METHOD_CLASS_MAPPING[node.method_name], number_object: receiver.source)
         end
 
         def correct_sym_method(to_method)
@@ -120,8 +127,14 @@ module RuboCop
           "{ |i| #{body} }"
         end
 
+        def remove_parentheses(corrector, node)
+          corrector.replace(node.loc.begin, ' ')
+          corrector.remove(node.loc.end)
+        end
+
         def ignore_receiver?(receiver)
-          if receiver.send_type? && ignored_method?(receiver.method_name)
+          if receiver.numeric_type? || (receiver.send_type? &&
+            (conversion_method?(receiver.method_name) || ignored_method?(receiver.method_name)))
             true
           elsif (receiver = top_receiver(receiver))
             receiver.const_type? && ignored_class?(receiver.const_name)
@@ -134,6 +147,10 @@ module RuboCop
           receiver = node
           receiver = receiver.receiver until receiver.receiver.nil?
           receiver
+        end
+
+        def conversion_method?(method_name)
+          CONVERSION_METHODS.include?(method_name)
         end
 
         def ignored_classes

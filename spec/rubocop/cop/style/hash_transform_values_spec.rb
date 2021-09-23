@@ -105,8 +105,7 @@ RSpec.describe RuboCop::Cop::Style::HashTransformValues, :config do
     RUBY
   end
 
-  it 'flags _.map {...}.to_h when transform_values could be used ' \
-     'when line break before `to_h`' do
+  it 'flags _.map {...}.to_h when transform_values could be used when line break before `to_h`' do
     expect_offense(<<~RUBY)
       x.map {|k, v| [k, foo(v)]}.
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `transform_values` over `map {...}.to_h`.
@@ -209,6 +208,28 @@ RSpec.describe RuboCop::Cop::Style::HashTransformValues, :config do
 
       expect_correction(<<~RUBY)
         x.transform_values {|v| foo(v)}
+      RUBY
+    end
+
+    it 'register and corrects an offense _.to_h{...} when value is a hash literal and is enclosed in braces' do
+      expect_offense(<<~RUBY)
+        {a: 1, b: 2}.to_h { |key, val| [key, { value: val }] }
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `transform_values` over `to_h {...}`.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        {a: 1, b: 2}.transform_values { |val| { value: val } }
+      RUBY
+    end
+
+    it 'register and corrects an offense _.to_h{...} when value is a hash literal and is not enclosed in braces' do
+      expect_offense(<<~RUBY)
+        {a: 1, b: 2}.to_h { |key, val| [key, value: val] }
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Prefer `transform_values` over `to_h {...}`.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        {a: 1, b: 2}.transform_values { |val| { value: val } }
       RUBY
     end
 

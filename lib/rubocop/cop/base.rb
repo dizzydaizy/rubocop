@@ -187,8 +187,7 @@ module RuboCop
       def self.match?(given_names)
         return false unless given_names
 
-        given_names.include?(cop_name) ||
-          given_names.include?(department.to_s)
+        given_names.include?(cop_name) || given_names.include?(department.to_s)
       end
 
       def cop_name
@@ -206,13 +205,11 @@ module RuboCop
       end
 
       def config_to_allow_offenses
-        Formatter::DisabledConfigFormatter
-          .config_to_allow_offenses[cop_name] ||= {}
+        Formatter::DisabledConfigFormatter.config_to_allow_offenses[cop_name] ||= {}
       end
 
       def config_to_allow_offenses=(hash)
-        Formatter::DisabledConfigFormatter.config_to_allow_offenses[cop_name] =
-          hash
+        Formatter::DisabledConfigFormatter.config_to_allow_offenses[cop_name] = hash
       end
 
       def target_ruby_version
@@ -225,12 +222,17 @@ module RuboCop
 
       def relevant_file?(file)
         file == RuboCop::AST::ProcessedSource::STRING_SOURCE_NAME ||
-          file_name_matches_any?(file, 'Include', true) &&
-            !file_name_matches_any?(file, 'Exclude', false)
+          (file_name_matches_any?(file, 'Include', true) &&
+            !file_name_matches_any?(file, 'Exclude', false))
       end
 
       def excluded_file?(file)
         !relevant_file?(file)
+      end
+
+      # There should be very limited reasons for a Cop to do it's own parsing
+      def parse(source, path = nil)
+        ProcessedSource.new(source, target_ruby_version, path)
       end
 
       ### Persistence
@@ -259,7 +261,7 @@ module RuboCop
       # @deprecated Make potential errors with previous API more obvious
       def offenses
         raise 'The offenses are not directly available; ' \
-          'they are returned as the result of the investigation'
+              'they are returned as the result of the investigation'
       end
 
       ### Reserved for Commissioner
@@ -439,7 +441,7 @@ module RuboCop
           severity.to_sym
         else
           message = "Warning: Invalid severity '#{severity}'. " \
-            "Valid severities are #{Severity::NAMES.join(', ')}."
+                    "Valid severities are #{Severity::NAMES.join(', ')}."
           warn(Rainbow(message).red)
         end
       end

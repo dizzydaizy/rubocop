@@ -6,13 +6,16 @@ module RuboCop
       # This cop checks that comment annotation keywords are written according
       # to guidelines.
       #
+      # Annotation keywords can be specified by overriding the cop's `Keywords`
+      # configuration. Keywords are allowed to be single words or phrases.
+      #
       # NOTE: With a multiline comment block (where each line is only a
       # comment), only the first line will be able to register an offense, even
       # if an annotation keyword starts another line. This is done to prevent
       # incorrect registering of keywords (eg. `review`) inside a paragraph as an
       # annotation.
       #
-      # @example
+      # @example RequireColon: true (default)
       #   # bad
       #   # TODO make better
       #
@@ -36,66 +39,90 @@ module RuboCop
       #
       #   # good
       #   # OPTIMIZE: does not work
+      #
+      # @example RequireColon: false
+      #   # bad
+      #   # TODO: make better
+      #
+      #   # good
+      #   # TODO make better
+      #
+      #   # bad
+      #   # fixme does not work
+      #
+      #   # good
+      #   # FIXME does not work
+      #
+      #   # bad
+      #   # Optimize does not work
+      #
+      #   # good
+      #   # OPTIMIZE does not work
       class CommentAnnotation < Base
-        include AnnotationComment
         include RangeHelp
         extend AutoCorrector
 
-        MSG = 'Annotation keywords like `%<keyword>s` should be all ' \
-              'upper case, followed by a colon, and a space, ' \
-              'then a note describing the problem.'
-        MISSING_NOTE = 'Annotation comment, with keyword `%<keyword>s`, ' \
-                       'is missing a note.'
+        MSG_COLON_STYLE = 'Annotation keywords like `%<keyword>s` should be all ' \
+                          'upper case, followed by a colon, and a space, ' \
+                          'then a note describing the problem.'
+        MSG_SPACE_STYLE = 'Annotation keywords like `%<keyword>s` should be all ' \
+                          'upper case, followed by a space, ' \
+                          'then a note describing the problem.'
+        MISSING_NOTE = 'Annotation comment, with keyword `%<keyword>s`, is missing a note.'
 
         def on_new_investigation
           processed_source.comments.each_with_index do |comment, index|
             next unless first_comment_line?(processed_source.comments, index) ||
                         inline_comment?(comment)
 
-            margin, first_word, colon, space, note = split_comment(comment)
-            next unless annotation?(comment) &&
-                        !correct_annotation?(first_word, colon, space, note)
+            annotation = AnnotationComment.new(comment, keywords)
+            next unless annotation.annotation? && !annotation.correct?(colon: requires_colon?)
 
-            range = annotation_range(comment, margin, first_word, colon, space)
-
-            register_offense(range, note, first_word)
+            register_offense(annotation)
           end
         end
 
         private
 
-        def register_offense(range, note, first_word)
-          add_offense(
-            range,
-            message: format(note ? MSG : MISSING_NOTE, keyword: first_word)
-          ) do |corrector|
-            next if note.nil?
+        def register_offense(annotation)
+          range = annotation_range(annotation)
+          message = if annotation.note
+                      requires_colon? ? MSG_COLON_STYLE : MSG_SPACE_STYLE
+                    else
+                      MISSING_NOTE
+                    end
 
-            corrector.replace(range, "#{first_word.upcase}: ")
+          add_offense(range, message: format(message, keyword: annotation.keyword)) do |corrector|
+            next if annotation.note.nil?
+
+            correct_offense(corrector, range, annotation.keyword)
           end
         end
 
         def first_comment_line?(comments, index)
-          index.zero? ||
-            comments[index - 1].loc.line < comments[index].loc.line - 1
+          index.zero? || comments[index - 1].loc.line < comments[index].loc.line - 1
         end
 
         def inline_comment?(comment)
           !comment_line?(comment.loc.expression.source_line)
         end
 
-        def annotation_range(comment, margin, first_word, colon, space)
-          start = comment.loc.expression.begin_pos + margin.length
-          length = concat_length(first_word, colon, space)
-          range_between(start, start + length)
+        def annotation_range(annotation)
+          range_between(*annotation.bounds)
         end
 
-        def concat_length(*args)
-          args.reduce(0) { |acc, elem| acc + elem.to_s.length }
+        def correct_offense(corrector, range, keyword)
+          return corrector.replace(range, "#{keyword.upcase}: ") if requires_colon?
+
+          corrector.replace(range, "#{keyword.upcase} ")
         end
 
-        def correct_annotation?(first_word, colon, space, note)
-          keyword?(first_word) && (colon && space && note || !colon && !note)
+        def requires_colon?
+          cop_config['RequireColon']
+        end
+
+        def keywords
+          cop_config['Keywords']
         end
       end
     end

@@ -68,13 +68,11 @@ module RuboCop
           delimiters = preferred_delimiters_for(type)
 
           "`#{type}`-literals should be delimited by " \
-          "`#{delimiters[0]}` and `#{delimiters[1]}`."
+            "`#{delimiters[0]}` and `#{delimiters[1]}`."
         end
 
         def preferred_delimiters_for(type)
-          PreferredDelimiters
-            .new(type, @config, nil)
-            .delimiters
+          PreferredDelimiters.new(type, @config, nil).delimiters
         end
 
         def uses_preferred_delimiter?(node, type)

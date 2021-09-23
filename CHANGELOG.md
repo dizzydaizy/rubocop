@@ -2,6 +2,358 @@
 
 ## master (unreleased)
 
+## 1.21.0 (2021-09-13)
+
+### New features
+
+* [#7849](https://github.com/rubocop/rubocop/issues/7849): Add new `Lint/AmbiguousOperatorPrecedence` cop. ([@dvandersluis][])
+* [#9061](https://github.com/rubocop/rubocop/issues/9061): Add new `Lint/IncompatibleIoSelectWithFiberScheduler` cop. ([@koic][])
+
+### Bug fixes
+
+* [#10067](https://github.com/rubocop/rubocop/pull/10067): Fix an error for `Lint/NumberConversion` when using nested number conversion methods. ([@koic][])
+* [#10054](https://github.com/rubocop/rubocop/pull/10054): Fix a false positive for `Layout/SpaceAroundOperators` when match operators between `<<` and `+=`. ([@koic][])
+* [#10061](https://github.com/rubocop/rubocop/issues/10061): Fix a false positive for `Style/RedundantSort` when using `size` method in the block. ([@koic][])
+* [#10063](https://github.com/rubocop/rubocop/pull/10063): Fix a false positive for `Layout/SingleLineBlockChain` when method call chained on a new line after a single line block with trailing dot. ([@koic][])
+* [#10064](https://github.com/rubocop/rubocop/pull/10064): Fix `Style/ExplicitBlockArgument` corrector assuming any existing block argument was named `block`. ([@byroot][])
+* [#10070](https://github.com/rubocop/rubocop/issues/10070): Fix a false positive for `Style/MutableConstant` when using non-interpolated heredoc in Ruby 3.0. ([@koic][])
+
+### Changes
+
+* [#9674](https://github.com/rubocop/rubocop/issues/9674): Disable `Style/AsciiComments` by default. ([@dvandersluis][])
+* [#10051](https://github.com/rubocop/rubocop/pull/10051): Improve the messaging for `Style/Documentation` to be more clear about what class/module needs documentation. ([@dvandersluis][])
+* [#10074](https://github.com/rubocop/rubocop/pull/10074): Update `Naming/InclusiveLanguage` to be disabled by default. ([@dvandersluis][])
+* [#10068](https://github.com/rubocop/rubocop/pull/10068): Mark `Style/AndOr` as unsafe auto-correction. ([@koic][])
+
+## 1.20.0 (2021-08-26)
+
+### New features
+
+* [#10040](https://github.com/rubocop/rubocop/pull/10040): Make `Lint/Debugger` aware of debug.rb. ([@koic][])
+* [#9580](https://github.com/rubocop/rubocop/issues/9580): Add a new cop that enforces which bundler gem file to use. ([@gregfletch][])
+
+### Bug fixes
+
+* [#10033](https://github.com/rubocop/rubocop/issues/10033): Fix an incorrect auto-correct for `Style/BlockDelimiters` when there is a comment after the closing brace and using method chanin. ([@koic][])
+* [#6630](https://github.com/rubocop/rubocop/issues/6630): Updated `Style/CommentAnnotation` to be able to handle multiword keyword phrases. ([@dvandersluis][])
+* [#7836](https://github.com/rubocop/rubocop/issues/7836): Update `Style/BlockDelimeters` to add `begin`...`end` when converting a block containing `rescue` or `ensure` to braces. ([@dvandersluis][])
+* [#10031](https://github.com/rubocop/rubocop/issues/10031): Fix a false positive for `Style/HashExcept` when comparing with hash value. ([@koic][])
+
+### Changes
+
+* [#10034](https://github.com/rubocop/rubocop/pull/10034): Add `RubyJard` debugger calls to Lint/Debugger/DebuggerMethods. ([@DanielVartanov][])
+* [#10006](https://github.com/rubocop/rubocop/pull/10006): Interpolated string literals are no longer frozen since Ruby 3.0. ([@splattael][])
+* [#9328](https://github.com/rubocop/rubocop/issues/9328): Recognize shareable_constant_value magic comment. ([@thearjunmdas][], [@caalberts][])
+* [#10036](https://github.com/rubocop/rubocop/issues/10036): Mark `Style/StructInheritance` as unsafe auto-correction. ([@koic][])
+
+## 1.19.1 (2021-08-19)
+
+### Bug fixes
+
+* [#10017](https://github.com/rubocop/rubocop/pull/10017): Fixan error for `Layout/RescueEnsureAlignment` when using zsuper with block. ([@koic][])
+* [#10011](https://github.com/rubocop/rubocop/issues/10011): Fix a false positive for `Style/RedundantSelfAssignmentBranch` when using instance variable, class variable, and global variable. ([@koic][])
+* [#10010](https://github.com/rubocop/rubocop/issues/10010): Fix a false positive for `Style/DoubleNegation` when `!!` is used at return location and before `rescue` keyword. ([@koic][])
+* [#10014](https://github.com/rubocop/rubocop/issues/10014): Fix `Style/Encoding` to handle more situations properly. ([@dvandersluis][])
+* [#10016](https://github.com/rubocop/rubocop/issues/10016): Fix conflict between `Style/SoleNestedConditional` and `Style/NegatedIf`/`Style/NegatedUnless`. ([@dvandersluis][])
+* [#10024](https://github.com/rubocop/rubocop/issues/10024): Fix an incorrect auto-correct for `Style/RedundantSelfAssignmentBranch` when using multiline `if` / `else` conditional assignment. ([@koic][])
+* [#10004](https://github.com/rubocop/rubocop/issues/10004): Fix a false positive for `Style/RedundantBegin` when using one-liner with semicolon. ([@koic][])
+
+## 1.19.0 (2021-08-12)
+
+### New features
+
+* [#4182](https://github.com/rubocop/rubocop/issues/4182): Add `Lint/AmbiguousRange` cop to check for ranges with ambiguous boundaries. ([@dvandersluis][])
+* [#10000](https://github.com/rubocop/rubocop/pull/10000): Parallel static analysis by default. ([@koic][])
+* [#9948](https://github.com/rubocop/rubocop/pull/9948): Support Ruby 2.7's pattern matching for `Style/ConditionalAssignment` cop. ([@koic][])
+* [#9999](https://github.com/rubocop/rubocop/pull/9999): Add new `Style/RedundantSelfAssignmentBranch` cop. ([@koic][])
+
+### Bug fixes
+
+* [#9927](https://github.com/rubocop/rubocop/issues/9927): Indent hash values in `Layout/LineEndStringConcatenationIndentation`. ([@jonas054][])
+* [#9959](https://github.com/rubocop/rubocop/issues/9959): Make `Style/IdenticalConditionalBranches` able to handle ternary `if`s. ([@dvandersluis][])
+* [#9946](https://github.com/rubocop/rubocop/issues/9946): Avoid slow regexp matches in `Style/CommentedKeyword`. ([@jonas054][])
+* [#7422](https://github.com/rubocop/rubocop/issues/7422): Treat constant assignment like other assignment in `Layout/SpaceAroundOperators`. ([@dvandersluis][])
+* [#9953](https://github.com/rubocop/rubocop/issues/9953): Fix an infinite loop error and a false auto-correction behavior for `Layout/EndAlignment` when using a conditional statement in a method argument. ([@koic][])
+* [#9958](https://github.com/rubocop/rubocop/issues/9958): Prevent an infinite loop when a detected method has fewer arguments than expected. ([@dvandersluis][])
+* [#9977](https://github.com/rubocop/rubocop/issues/9977): Update `Layout/EmptyLineAfterGuardClause` to not register an offense if there is another expression following the guard clause on the same line. ([@dvandersluis][])
+* [#9980](https://github.com/rubocop/rubocop/issues/9980): Fix a false positive for `Style/IdenticalConditionalBranches` when assigning to a variable used in a condition. ([@koic][])
+* [#9975](https://github.com/rubocop/rubocop/issues/9975): Parentheses are always required for `Style/MethodDefParentheses` when a forwarding argument (`...`) is used. ([@dvandersluis][])
+* [#9984](https://github.com/rubocop/rubocop/pull/9984): Fix false negatives involving heredocs for `Layout/SpaceBeforeComma`, `Layout/SpaceBeforeComment`, `Layout/SpaceBeforeSemicolon` and `Layout/SpaceInsideParens`. ([@dvandersluis][])
+* [#9954](https://github.com/rubocop/rubocop/issues/9954): Fix infinite loop error for `Layout/HashAlignment` when `EnforcedStyle: with_fixed_indentation` is specified for `Layout/ArgumentAlignment`. ([@koic][])
+* [#10002](https://github.com/rubocop/rubocop/issues/10002): Fix an incorrect auto-correct for `Lint/AmbigousRegexpLiteral` when using nested method arguments without parentheses. ([@koic][])
+* [#9952](https://github.com/rubocop/rubocop/pull/9952) [rubocop-rspec#1126](https://github.com/rubocop/rubocop-rspec/issues/1126): Fix `inherit_mode` for deeply nested configuration defined in extensions' default configuration. ([@pirj][])
+* [#9957](https://github.com/rubocop/rubocop/issues/9957): Add `WholeWord` configuration to `Naming/InclusiveLanguage`'s `FlaggedTerms` config. ([@dvandersluis][])
+* [#9970](https://github.com/rubocop/rubocop/pull/9970): Don't register an offense when sort method has arguments for `Style/RedundantSort` cop. ([@mtsmfm][])
+* [#4097](https://github.com/rubocop/rubocop/issues/4097): Add require English for special globals. ([@biinari][])
+* [#9955](https://github.com/rubocop/rubocop/issues/9955): Fix `Style/ExplicitBlockArgument` adding a second set of parentheses. ([@dvandersluis][])
+* [#9973](https://github.com/rubocop/rubocop/issues/9973): Fix a false positive for `Layout/RescueEnsureAlignment` when aligned `rescue` keyword and leading dot. ([@koic][])
+* [#9945](https://github.com/rubocop/rubocop/issues/9945): Fix auto-correction of lines in heredocs with only spaces in `Layout/TrailingWhitespace`. ([@jonas054][])
+
+### Changes
+
+* [#9989](https://github.com/rubocop/rubocop/issues/9989): Mark `Style/CommentedKeyword` as unsafe auto-correction. ([@koic][])
+* [#9964](https://github.com/rubocop/rubocop/pull/9964): Make `Layout/LeadingCommentSpace` aware of `#:nodoc`. ([@koic][])
+* [#9985](https://github.com/rubocop/rubocop/pull/9985): Mark `Style/IdenticalConditionalBranches` as unsafe auto-correction. ([@koic][])
+* [#9962](https://github.com/rubocop/rubocop/issues/9962): Update `Style/WordArray` to register an offense in `percent` style if any values contain spaces. ([@dvandersluis][])
+* [#9979](https://github.com/rubocop/rubocop/pull/9979): Enable basic autocorrection for `Style/Semicolon`. ([@dvandersluis][])
+
+## 1.18.4 (2021-07-23)
+
+### New features
+
+* [#9930](https://github.com/rubocop/rubocop/pull/9930): Support Ruby 2.7's pattern matching for `Lint/DuplicateBranch` cop. ([@koic][])
+
+### Bug fixes
+
+* [#9938](https://github.com/rubocop/rubocop/pull/9938): Fix an incorrect auto-correct for `Layout/LineLength` when a heredoc is used as the first element of an array. ([@koic][])
+* [#9940](https://github.com/rubocop/rubocop/issues/9940): Fix an incorrect auto-correct for `Style/HashTransformValues` when value is a hash literal for `_.to_h{...}`. ([@koic][])
+* [#9752](https://github.com/rubocop/rubocop/issues/9752): Improve error message for top level department used in configuration. ([@jonas054][])
+* [#9933](https://github.com/rubocop/rubocop/pull/9933): Fix GitHub Actions formatter when running in non-default directory. ([@ojab][])
+* [#9922](https://github.com/rubocop/rubocop/issues/9922): Make better auto-corrections in `Style/DoubleCopDisableDirective`. ([@jonas054][])
+* [#9848](https://github.com/rubocop/rubocop/issues/9848): Fix handling of comments in `Layout/ClassStructure` auto-correct. ([@jonas054][])
+* [#9926](https://github.com/rubocop/rubocop/pull/9926): Fix an incorrect auto-correct for `Style/SingleLineMethods` when method body is enclosed in parentheses. ([@koic][])
+* [#9928](https://github.com/rubocop/rubocop/issues/9928): Fix an infinite loop error and a false auto-correction behavior for `Layout/EndAlignment` when using operator methods and `EnforcedStyleAlignWith: variable`. ([@koic][])
+* [#9434](https://github.com/rubocop/rubocop/issues/9434): Fix false positive for setter calls in `Layout/FirstArgumentIndentation`. ([@jonas054][])
+
+## 1.18.3 (2021-07-06)
+
+### Bug fixes
+
+* [#9891](https://github.com/rubocop/rubocop/issues/9891): Fix `--auto-gen-config` bug for `Style/HashSyntax`. ([@jonas054][])
+* [#9905](https://github.com/rubocop/rubocop/issues/9905): Fix false positive for single line concatenation in `Layout/LineEndStringConcatenationIndentation`. ([@jonas054][])
+* [#9907](https://github.com/rubocop/rubocop/issues/9907): Fix an incorrect auto-correct for `Lint/UselessTimes` when using block argument for `1.times`. ([@koic][])
+* [#9869](https://github.com/rubocop/rubocop/issues/9869): Fix reference to file in configuration override warning. ([@jonas054][])
+* [#9902](https://github.com/rubocop/rubocop/issues/9902): Fix an incorrect auto-correct for `Style/BlockDelimiters` when there is a comment after the closing brace. ([@koic][])
+* [#8469](https://github.com/rubocop/rubocop/issues/8469): Add inspection of `class <<` to `Layout/SpaceAroundOperators`. ([@jonas054][])
+* [#9909](https://github.com/rubocop/rubocop/pull/9909): This PR fixes an incorrect auto-correct for `Style/SingleLineMethods` when using `return`, `break`, or `next` for one line method body in Ruby 3.0. ([@koic][])
+* [#9914](https://github.com/rubocop/rubocop/issues/9914): Fix an error for `Layout/HashAlignment` when using aligned hash argument for `proc.()`. ([@koic][])
+
+## 1.18.2 (2021-07-02)
+
+### Bug fixes
+
+* [#9894](https://github.com/rubocop/rubocop/issues/9894): Handle multiline string literals in `Layout/LineEndStringConcatenationIndentation`. ([@jonas054][])
+* [#9890](https://github.com/rubocop/rubocop/issues/9890): Make colon after comment annotation configurable. ([@gregfletch][])
+
+## 1.18.1 (2021-06-30)
+
+### Bug fixes
+
+* [#9897](https://github.com/rubocop/rubocop/pull/9897): Fix an incorrect auto-correct for `Layout/HashAlignment` when setting `EnforcedStyle: with_fixed_indentation` of `Layout/ArgumentAlignment` and using misaligned keyword arguments. ([@koic][])
+
+### Changes
+
+* [#9895](https://github.com/rubocop/rubocop/issues/9895): Set `CheckStrings: false` and Remove `master` from `FlaggedTerms` for `Naming/InclusiveLanguage`. ([@koic][])
+
+## 1.18.0 (2021-06-29)
+
+### New features
+
+* [#9842](https://github.com/rubocop/rubocop/pull/9842): Add new `Naming/InclusiveLanguage` cop. ([@tjwp][])
+
+### Bug fixes
+
+* [#9803](https://github.com/rubocop/rubocop/pull/9803): Fix `Bundler/GemVersion` cop not respecting git tags. ([@tejasbubane][], [@timlkelly][])
+* [#9882](https://github.com/rubocop/rubocop/pull/9882): Fix an incorrect auto-correct for `Layout/LineLength` when using heredoc as the first method argument and omitting parentheses. ([@koic][])
+* [#7592](https://github.com/rubocop/rubocop/pull/7592): Add cop `Layout/LineEndStringConcatenationIndentation`. ([@jonas054][])
+* [#9880](https://github.com/rubocop/rubocop/pull/9880): Fix a false positive for `Style/RegexpLiteral` when using a regexp starts with a blank as a method argument. ([@koic][])
+* [#9888](https://github.com/rubocop/rubocop/pull/9888): Fix a false positive for `Layout/ClosingParenthesisIndentation` when using keyword arguemnts. ([@koic][])
+* [#9886](https://github.com/rubocop/rubocop/pull/9886): Fix indentation in Style/ClassAndModuleChildren. ([@markburns][])
+
+### Changes
+
+* [#9144](https://github.com/rubocop/rubocop/issues/9144): Add `aggressive` and `conservative` modes of operation for `Style/StringConcatenation` cop. ([@tejasbubane][])
+
+## 1.17.0 (2021-06-15)
+
+### New features
+
+* [#9626](https://github.com/rubocop/rubocop/pull/9626): Disable all cop department with directive comment. ([@AndreiEres][])
+* [#9827](https://github.com/rubocop/rubocop/issues/9827): Add basic auth support to download raw yml config from private repo. ([@AirWick219][])
+* [#9873](https://github.com/rubocop/rubocop/pull/9873): Support one-line pattern matching syntax for `Layout/SpaceAroundKeyword` and `Layout/SpaceAroundOperators`. ([@koic][])
+* [#9857](https://github.com/rubocop/rubocop/pull/9857): Support Ruby 2.7's pattern matching for `Layout/IndentationWidth` cop. ([@koic][])
+* [#9877](https://github.com/rubocop/rubocop/pull/9877): Support Ruby 2.7's `in` pattern syntax for `Lint/LiteralAsCondition`. ([@koic][])
+* [#9855](https://github.com/rubocop/rubocop/pull/9855): Support Ruby 2.7's pattern matching for `Style/IdenticalConditionalBranches` cop. ([@koic][])
+
+### Bug fixes
+
+* [#9874](https://github.com/rubocop/rubocop/issues/9874): Fix a false positive for `Style/RegexpLiteral` when using `%r` regexp literal with `EnforcedStyle: omit_parentheses` of `Style/MethodCallWithArgsParentheses`. ([@koic][])
+* [#9876](https://github.com/rubocop/rubocop/pull/9876): Fix empty line after guard clause with `and return` and heredoc. ([@AndreiEres][])
+* [#9861](https://github.com/rubocop/rubocop/issues/9861): Fix error in `Layout/HashAlignment` with an empty hash literal. ([@dvandersluis][])
+* [#9867](https://github.com/rubocop/rubocop/pull/9867): Fix an incorrect auto-correct for `Layout/DotPosition` when using only dot line. ([@koic][])
+
+## 1.16.1 (2021-06-09)
+
+### Bug fixes
+
+* [#9843](https://github.com/rubocop/rubocop/issues/9843): Fix `Style/RedundantSelf` to allow conditional nodes to use `self` in the condition when a variable named is shadowed inside. ([@dvandersluis][])
+* [#9845](https://github.com/rubocop/rubocop/issues/9845): Fix `Style/QuotedSymbols` for hash-rocket hashes. ([@dvandersluis][])
+* [#9849](https://github.com/rubocop/rubocop/pull/9849): Fix a false negative for `Layout/HashAlignment` when setting `EnforcedStyle: with_fixed_indentation` of `Layout/ArgumentAlignment` and using misaligned keyword arguments. ([@koic][])
+* [#9854](https://github.com/rubocop/rubocop/pull/9854): Allow braced numeric blocks in `omit_parentheses` style of `Style/MethodCallWithArgsParentheses`. ([@gsamokovarov][])
+* [#9850](https://github.com/rubocop/rubocop/issues/9850): Fix missing `AllowComments` option for `Lint/EmptyInPattern`. ([@koic][])
+
+## 1.16.0 (2021-06-01)
+
+### New features
+
+* [#9841](https://github.com/rubocop/rubocop/pull/9841): Support guard `if` and `unless` syntax keywords of Ruby 2.7's pattern matching for `Layout/SpaceAroundKeyword`. ([@koic][])
+* [#9812](https://github.com/rubocop/rubocop/pull/9812): Support auto-correction for `Style/IdenticalConditionalBranches`. ([@koic][])
+* [#9833](https://github.com/rubocop/rubocop/pull/9833): Add new `Style/InPatternThen` cop. ([@koic][])
+* [#9840](https://github.com/rubocop/rubocop/issues/9840): Adds `AllowedReceivers` option for `Style/HashEachMethods`. ([@koic][])
+* [#9818](https://github.com/rubocop/rubocop/pull/9818): Support Ruby 2.7's `in` pattern syntax for `Layout/CaseIndentation`. ([@koic][])
+* [#9838](https://github.com/rubocop/rubocop/pull/9838): Support Ruby 2.7's pattern matching syntax for `Layout/SpaceAroundKeyword`. ([@koic][])
+* [#9793](https://github.com/rubocop/rubocop/issues/9793): Add `Style/QuotedSymbols` to enforce consistency in quoted symbols. ([@dvandersluis][])
+* [#9825](https://github.com/rubocop/rubocop/pull/9825): Add new `Lint/EmptyInPattern` cop. ([@koic][])
+* [#9834](https://github.com/rubocop/rubocop/pull/9834): Add new `Style/MultilineInPatternThen` cop. ([@koic][])
+
+### Bug fixes
+
+* [#9822](https://github.com/rubocop/rubocop/issues/9822): Fix a false directive comment range for `Lint/RedundantCopDisableDirective`. ([@koic][])
+* [#9819](https://github.com/rubocop/rubocop/issues/9819): Fix a false negative for `Style/TopLevelMethodDefinition` when defining a top-level method after a class definition. ([@koic][])
+* [#9836](https://github.com/rubocop/rubocop/issues/9836): Fix incorrect corrections for `Layout/HashAlignment` when a `kwsplat` node is on the same line as a `pair` node with table style. ([@dvandersluis][])
+* [#9805](https://github.com/rubocop/rubocop/pull/9805): Fix a false negative for `Layout/HashAlignment` when set `EnforcedStyle: with_fixed_indentation` of `ArgumentAlignment`. ([@koic][])
+* [#9811](https://github.com/rubocop/rubocop/issues/9811): Fix an error for `Layout/ArgumentAlignment` with `Layout/FirstHashElementIndentation` when setting `EnforcedStyle: with_fixed_indentation`. ([@koic][])
+
+### Changes
+
+* [#9809](https://github.com/rubocop/rubocop/pull/9809): Change `Lint/SymbolConversion` to only quote with double quotes, since `Style/QuotedSymbols` can now correct those to the correct quotes as per configuration. ([@dvandersluis][])
+
+## 1.15.0 (2021-05-17)
+
+### New features
+
+* [#9734](https://github.com/rubocop/rubocop/pull/9734): Add `Style/TopLevelMethodDefinition` cop. ([@tejasbubane][])
+* [#9780](https://github.com/rubocop/rubocop/issues/9780): Support summary report for `JUnitFormatter`. ([@koic][])
+* [#9798](https://github.com/rubocop/rubocop/pull/9798): Make `Layout/ArgumentAlignment` aware of kwargs. ([@koic][])
+
+### Bug fixes
+
+* [#9749](https://github.com/rubocop/rubocop/issues/9749): Fix autocorrection for `Layout/LineLength` to not move the first argument of an unparenthesized `send` node to the next line, which changes behaviour. ([@dvandersluis][])
+* [#9799](https://github.com/rubocop/rubocop/issues/9799): Fix invalid line splitting by `Layout/LineLength` for `send` nodes with heredoc arguments. ([@dvandersluis][])
+* [#9773](https://github.com/rubocop/rubocop/issues/9773): Fix `Style/EmptyLiteral` to not register offenses for `String.new` when `Style/FrozenStringLiteral` is enabled. ([@dvandersluis][])
+* [#9771](https://github.com/rubocop/rubocop/issues/9771): Change `AllowDSLWriters` to true by default for `Style/TrivialAccessors`. ([@koic][])
+* [#9777](https://github.com/rubocop/rubocop/pull/9777): Fix an incorrect auto-correct for `Style/RedundantBegin` when using multi-line `if` in `begin` block. ([@koic][])
+* [#9791](https://github.com/rubocop/rubocop/pull/9791): Fix a false negative for `Layout/IndentationWidth` when using `ensure` in `do` ... `end` block. ([@koic][])
+* [#9766](https://github.com/rubocop/rubocop/pull/9766): Fix a clobbering error for `Style/ClassAndModuleChildren` cop with compact style. ([@tejasbubane][])
+* [#9767](https://github.com/rubocop/rubocop/issues/9767): Fix `Style/ClassAndModuleChildren` cop to preserve comments. ([@tejasbubane][])
+* [#9792](https://github.com/rubocop/rubocop/issues/9792): Fix false positive for `Lint/Void` cop with ranges. ([@tejasbubane][])
+
+### Changes
+
+* [#9770](https://github.com/rubocop/rubocop/issues/9770): Update `Lint/EmptyBlock` to handle procs the same way as lambdas. ([@dvandersluis][])
+* [#9776](https://github.com/rubocop/rubocop/pull/9776): Update `Style/NilLambda` to handle procs as well. ([@dvandersluis][])
+* [#9744](https://github.com/rubocop/rubocop/pull/9744): The parallel flag will now be automatically ignored when combined with `--cache false`. Previously, an error was raised and execution stopped. ([@rrosenblum][])
+
+## 1.14.0 (2021-05-05)
+
+### New features
+
+* [#7669](https://github.com/rubocop/rubocop/issues/7669): New cop `Bundler/GemVersion` requires or forbids specifying gem versions. ([@timlkelly][])
+* [#9758](https://github.com/rubocop/rubocop/pull/9758): Support `TargetRubyVersion 3.1` (experimental). ([@koic][])
+* [#9733](https://github.com/rubocop/rubocop/issues/9733): Add cop `Layout/SingleLineBlockChain`. ([@jonas054][])
+
+### Bug fixes
+
+* [#9751](https://github.com/rubocop/rubocop/pull/9751): `Style/StringLiteral` doesn't autocorrect global variable interpolation. ([@etiennebarrie][])
+* [#9731](https://github.com/rubocop/rubocop/issues/9731): Fix two autocorrection issues for `Style/NegatedIfElseCondition`. ([@dvandersluis][])
+* [#9740](https://github.com/rubocop/rubocop/pull/9740): Fix an incorrect auto-correct for `Style/SingleLineMethods` when defining setter method. ([@koic][])
+* [#9757](https://github.com/rubocop/rubocop/pull/9757): Fix a false positive for `Lint/NumberConversion` when `:to_f` is one of multiple method arguments. ([@koic][])
+* [#9761](https://github.com/rubocop/rubocop/issues/9761): Fix `Style/ClassAndModuleChildren` false negative for `compact` style when a class/module is partially nested. ([@dvandersluis][])
+* [#9748](https://github.com/rubocop/rubocop/pull/9748): Prevent infinite loops during symlink traversal. ([@Tonkpils][])
+* [#9762](https://github.com/rubocop/rubocop/issues/9762): Update `VariableForce` to be able to handle `case-match` nodes. ([@dvandersluis][])
+* [#9729](https://github.com/rubocop/rubocop/issues/9729): Fix an error for `Style/IfUnlessModifier` when variable assignment is used in the branch body of if modifier. ([@koic][])
+* [#9750](https://github.com/rubocop/rubocop/issues/9750): Fix an incorrect auto-correct for `Style/SoleNestedConditional` when when using nested `if` within `unless foo == bar`. ([@koic][])
+* [#9751](https://github.com/rubocop/rubocop/pull/9751): `Style/StringLiteral` autocorrects `'\\'` into `"\\"`. ([@etiennebarrie][])
+* [#9732](https://github.com/rubocop/rubocop/pull/9732): Support deprecated Socket.gethostbyaddr and Socket.gethostbyname. ([@AndreiEres][])
+* [#9713](https://github.com/rubocop/rubocop/issues/9713): Fix autocorrection for block local variables in `Lint/UnusedBlockArgument`. ([@tejasbubane][])
+* [#9746](https://github.com/rubocop/rubocop/pull/9746): Fix a false positive for `Lint/UnreachableLoop` when using conditional `next` in a loop. ([@koic][])
+
+## 1.13.0 (2021-04-20)
+
+### New features
+
+* [#7977](https://github.com/rubocop/rubocop/issues/7977): Add `Layout/RedundantLineBreak` cop. ([@jonas054][])
+* [#9691](https://github.com/rubocop/rubocop/issues/9691): Add configuration parameter `InspectBlocks` to `Layout/RedundantLineBreak`. ([@jonas054][])
+* [#9684](https://github.com/rubocop/rubocop/issues/9684): Support `IgnoredMethods` option for `Lint/AmbguousBlockAssociation`. ([@gprado][])
+* [#9358](https://github.com/rubocop/rubocop/pull/9358): Support `restrictive_version_specificiers` option in `Bundler/GemComment` cop. ([@RobinDaugherty][])
+
+### Bug fixes
+
+* [#5576](https://github.com/rubocop/rubocop/issues/5576): Fix problem with inherited `Include` parameters. ([@jonas054][])
+* [#9690](https://github.com/rubocop/rubocop/pull/9690): Fix an incorrect auto-correct for `Style/IfUnlessModifier` when using a method with heredoc argument. ([@koic][])
+* [#9681](https://github.com/rubocop/rubocop/issues/9681): Fix an incorrect auto-correct for `Style/RedundantBegin` when using modifier `if` single statement in `begin` block. ([@koic][])
+* [#9698](https://github.com/rubocop/rubocop/issues/9698): Fix an error for `Style/StructInheritance` when extending instance of `Struct` without `do` ... `end` and class body is empty and single line definition. ([@koic][])
+* [#9700](https://github.com/rubocop/rubocop/issues/9700): Avoid warning about Ruby version mismatch. ([@marcandre][])
+* [#9636](https://github.com/rubocop/rubocop/issues/9636): Resolve symlinks when excluding directories. ([@ob-stripe][])
+* [#9707](https://github.com/rubocop/rubocop/issues/9707): Fix false positive for `Style/MethodCallWithArgsParentheses` with `omit_parentheses` style on an endless `defs` node. ([@dvandersluis][])
+* [#9689](https://github.com/rubocop/rubocop/issues/9689): Treat parens around array items the same for children and deeper descendants. ([@dvandersluis][])
+* [#9676](https://github.com/rubocop/rubocop/issues/9676): Fix an error for `Style/StringChars` when using `split` without parentheses. ([@koic][])
+* [#9712](https://github.com/rubocop/rubocop/pull/9712): Fix an incorrect auto-correct for `Style/HashConversion` when `Hash[]` as a method argument without parentheses. ([@koic][])
+* [#9704](https://github.com/rubocop/rubocop/pull/9704): Fix an incorrect auto-correct for `Style/SingleLineMethods` when single line method call without parentheses. ([@koic][])
+* [#9683](https://github.com/rubocop/rubocop/issues/9683): Fix an incorrect auto-correct for `Style/HashConversion` when using `zip` method without argument in `Hash[]`. ([@koic][])
+* [#9715](https://github.com/rubocop/rubocop/pull/9715): Fix an incorrect auto-correct for `EnforcedStyle: require_parentheses` of `Style/MethodCallWithArgsParentheses` with `Style/RescueModifier`. ([@koic][])
+
+### Changes
+
+* [#7544](https://github.com/rubocop/rubocop/pull/7544): Add --no-parallel (-P/--parallel can not be combined with --auto-correct). ([@kwerle][])
+* [#9648](https://github.com/rubocop/rubocop/pull/9648): Drop support for Ruby 2.4. ([@koic][])
+* [#9647](https://github.com/rubocop/rubocop/pull/9647): The parallel flag will now be automatically ignored when combined with `--auto-correct`, `--auto-gen-config`, or `-F/--fail-fast`. Previously, an error was raised and execution stopped. ([@rrosenblum][])
+
+## 1.12.1 (2021-04-04)
+
+### Bug fixes
+
+* [#9649](https://github.com/rubocop/rubocop/pull/9649): Fix when highlights contain multibyte characters. ([@osyo-manga][])
+* [#9646](https://github.com/rubocop/rubocop/pull/9646): Fix an incorrect auto-correct for `EnforcedStyle: require_parentheses` of `Style/MethodCallWithArgsParentheses` with `EnforcedStyle: conditionals` of `Style/AndOr`. ([@koic][])
+* [#9608](https://github.com/rubocop/rubocop/issues/9608): Fix a false positive for `Layout/EmptyLineAfterGuardClause` when using guard clause is after `rubocop:enable` comment. ([@koic][])
+* [#9637](https://github.com/rubocop/rubocop/issues/9637): Allow parentheses for forwarded args in `Style/MethodCallWithArgsParentheses`'s `omit_parentheses` style to avoid endless range ambiguity. ([@gsamokovarov][])
+* [#9641](https://github.com/rubocop/rubocop/issues/9641): Fix `Layout/MultilineMethodCallIndentation` triggering on method calls that look like operators. ([@dvandersluis][])
+* [#9638](https://github.com/rubocop/rubocop/pull/9638): Fix an error for `Layout/LineLength` when over limit at right hand side of multiple assignment. ([@koic][])
+* [#9639](https://github.com/rubocop/rubocop/pull/9639): Fix `Style/RedundantBegin` removing comments on assignment statement correction. ([@marcotc][])
+* [#9671](https://github.com/rubocop/rubocop/pull/9671): Fix an incorrect auto-correct for `Lint/AmbiguousOperator` with `Style/MethodCallWithArgsParentheses`. ([@koic][])
+* [#9645](https://github.com/rubocop/rubocop/pull/9645): Fix an incorrect auto-correct for `Style/SingleLineMethods` when using single line class method definition. ([@koic][])
+* [#9644](https://github.com/rubocop/rubocop/pull/9644): Fix an error and an incorrect auto-correct for `Style/MultilineMethodSignature` when line break after opening parenthesis. ([@koic][])
+* [#9672](https://github.com/rubocop/rubocop/issues/9672): Fix an incorrect auto-correct for `Style/HashConversion` when using  multi-argument `Hash[]` as a method argument. ([@koic][])
+
+## 1.12.0 (2021-03-24)
+
+### New features
+
+* [#9615](https://github.com/rubocop/rubocop/pull/9615): Add new `Style/StringChars` cop. ([@koic][])
+* [#9629](https://github.com/rubocop/rubocop/issues/9629): Add `AllowParenthesesInStringInterpolation` configuration to `Style/MethodCallWithArgsParentheses` to allow parenthesized calls in string interpolation. ([@gsamokovarov][])
+* [#9219](https://github.com/rubocop/rubocop/pull/9219): Allow excluding some constants from Style/Documentation. ([@fsateler][])
+* Add `AllowNil` option for `Lint/SuppressedException` to allow/disallow `rescue nil`. ([@corroded][])
+
+### Bug fixes
+
+* [#9560](https://github.com/rubocop/rubocop/pull/9560): Fix an error for `Lint/ClassMethodsDefinitions` when defining class methods with `class << self` with comment only body. ([@koic][])
+* [#9551](https://github.com/rubocop/rubocop/issues/9551): Fix a false positive for `Style/UnlessLogicalOperators` when using `||` operator and invoked method name includes "or" in the conditional branch. ([@koic][])
+* [#9620](https://github.com/rubocop/rubocop/pull/9620): Allow parentheses in operator methods calls for `Style/MethodCallWithArgsParentheses` `EnforcedStyle: omit_parentheses`. ([@gsamokovarov][])
+* [#9622](https://github.com/rubocop/rubocop/issues/9622): Fixed `Style/BisectedAttrAccessor` autocorrection to handle multiple bisected attrs in the same macro. ([@dvandersluis][])
+* [#9606](https://github.com/rubocop/rubocop/issues/9606): Fix an error for `Layout/IndentationConsistency` when using access modifier at the top level. ([@koic][])
+* [#9619](https://github.com/rubocop/rubocop/pull/9619): Fix infinite loop between `Layout/IndentationWidth` and `Layout/RescueEnsureAlignment` autocorrection. ([@dvandersluis][])
+* [#9633](https://github.com/rubocop/rubocop/pull/9633): Fix an incorrect auto-correct for `Lint/NumberConversion` when `to_i` method in symbol form. ([@koic][])
+* [#9616](https://github.com/rubocop/rubocop/pull/9616): Fix an incorrect auto-correct for `Style/EvalWithLocation` when using `#instance_eval` with a string argument in parentheses. ([@koic][])
+* [#9429](https://github.com/rubocop/rubocop/issues/9429): Fix `Style/NegatedIfElseCondition` autocorrect to keep comments in correct branch. ([@tejasbubane][])
+* [#9631](https://github.com/rubocop/rubocop/issues/9631): Fix an incorrect auto-correct for `Style/RedundantReturn` when using `return` with splat argument. ([@koic][])
+* [#9627](https://github.com/rubocop/rubocop/issues/9627): Fix an incorrect auto-correct for `Style/StructInheritance` when extending instance of Struct without `do` ... `end` and class body is empty. ([@koic][])
+* [#5953](https://github.com/rubocop/rubocop/issues/5953): Fix a false positive for `Style/AccessModifierDeclarations` when using `module_function` with symbol. ([@koic][])
+* [#9593](https://github.com/rubocop/rubocop/issues/9593): Fix an error when processing a directory is named `{}`. ([@koic][])
+* [#9599](https://github.com/rubocop/rubocop/issues/9599): Fix an error for `Style/CaseLikeIf` when using `include?` without a receiver. ([@koic][])
+* [#9582](https://github.com/rubocop/rubocop/issues/9582): Fix incorrect auto-correct for `Style/ClassEqualityComparison` when comparing `Module#name` for equality. ([@koic][])
+* [#9603](https://github.com/rubocop/rubocop/issues/9603): Fix a false positive for `Style/SoleNestedConditional` when using nested modifier on value assigned in condition. ([@koic][])
+* [#9598](https://github.com/rubocop/rubocop/pull/9598): Fix RuboCop::MagicComment#valid_shareable_constant_value?. ([@kachick][])
+* [#9625](https://github.com/rubocop/rubocop/pull/9625): Allow parentheses in yield arguments with `Style/MethodCallWithArgsParentheses` `EnforcedStyle: omit_parentheses` to fix invalid Ruby auto-correction. ([@gsamokovarov][])
+* [#9558](https://github.com/rubocop/rubocop/issues/9558): Fix inconsistency when dealing with URIs that are wrapped in single quotes vs double quotes. ([@dvandersluis][])
+* [#9613](https://github.com/rubocop/rubocop/issues/9613): Fix a false positive for `Style/RedundantSelf` when a self receiver on an lvalue of mlhs arguments. ([@koic][])
+* [#9586](https://github.com/rubocop/rubocop/issues/9586): Update `Naming/RescuedExceptionsVariableName` to not register on inner rescues when nested. ([@dvandersluis][])
+
+### Changes
+
+* [#9487](https://github.com/rubocop/rubocop/issues/9487): Mark Naming/MemoizedInstanceVariableName as unsafe. ([@marcandre][])
+* [#9601](https://github.com/rubocop/rubocop/issues/9601): Make `Style/RedundantBegin` aware of redundant `begin`/`end` blocks around memoization. ([@koic][])
+* [#9617](https://github.com/rubocop/rubocop/issues/9617): Disable suggested extensions when using the `--stdin` option. ([@dvandersluis][])
+
 ## 1.11.0 (2021-03-01)
 
 ### New features
@@ -5492,3 +5844,19 @@
 [@cteece]: https://github.com/cteece
 [@TSMMark]: https://github.com/TSMMark
 [@caalberts]: https://github.com/caalberts
+[@kachick]: https://github.com/kachick
+[@corroded]: https://github.com/corroded
+[@osyo-manga]: https://github.com/osyo-manga
+[@ob-stripe]: https://github.com/ob-stripe
+[@kwerle]: https://github.com/kwerle
+[@RobinDaugherty]: https://github.com/RobinDaugherty
+[@etiennebarrie]: https://github.com/etiennebarrie
+[@Tonkpils]: https://github.com/Tonkpils
+[@timlkelly]: https://github.com/timlkelly
+[@AirWick219]: https://github.com/AirWick219
+[@markburns]: https://github.com/markburns
+[@gregfletch]: https://github.com/gregfletch
+[@thearjunmdas]: https://github.com/thearjunmdas
+[@DanielVartanov]: https://github.com/DanielVartanov
+[@splattael]: https://github.com/splattael
+[@byroot]: https://github.com/byroot

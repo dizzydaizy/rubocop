@@ -29,7 +29,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
     end
   end
 
-  context 'Semantic style' do
+  context 'EnforcedStyle: semantic' do
     cop_config = {
       'EnforcedStyle' => 'semantic',
       'ProceduralMethods' => %w[tap],
@@ -39,8 +39,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
 
     let(:cop_config) { cop_config }
 
-    it 'accepts a multi-line block with braces if the return value is ' \
-       'assigned' do
+    it 'accepts a multi-line block with braces if the return value is assigned' do
       expect_no_offenses(<<~RUBY)
         foo = map { |x|
           x
@@ -48,8 +47,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'accepts a multi-line block with braces if it is the return value ' \
-       'of its scope' do
+    it 'accepts a multi-line block with braces if it is the return value of its scope' do
       expect_no_offenses(<<~RUBY)
         block do
           map { |x|
@@ -75,8 +73,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'accepts a multi-line block with braces when passed to a known ' \
-       'functional method' do
+    it 'accepts a multi-line block with braces when passed to a known functional method' do
       expect_no_offenses(<<~RUBY)
         let(:foo) {
           x
@@ -84,8 +81,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'registers an offense for a multi-line block with braces if the ' \
-       'return value is not used' do
+    it 'registers an offense for a multi-line block with braces if the return value is not used' do
       expect_offense(<<~RUBY)
         each { |x|
              ^ Prefer `do...end` over `{...}` for procedural blocks.
@@ -94,8 +90,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'registers an offense for a multi-line block with do-end if the ' \
-       'return value is assigned' do
+    it 'registers an offense for a multi-line block with do-end if the return value is assigned' do
       expect_offense(<<~RUBY)
         foo = map do |x|
                   ^^ Prefer `{...}` over `do...end` for functional blocks.
@@ -124,8 +119,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'accepts a multi-line block with do-end if it is the return value ' \
-       'of its scope' do
+    it 'accepts a multi-line block with do-end if it is the return value of its scope' do
       expect_no_offenses(<<~RUBY)
         block do
           map do |x|
@@ -159,8 +153,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       expect_no_offenses('detect { true }...other')
     end
 
-    it 'accepts a multi-line functional block with do-end if it is ' \
-       'a known procedural method' do
+    it 'accepts a multi-line functional block with do-end if it is a known procedural method' do
       expect_no_offenses(<<~RUBY)
         foo = bar.tap do |x|
           x.age = 3
@@ -203,9 +196,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       end
 
       context 'with AllowBracesOnProceduralOneLiners true' do
-        let(:cop_config) do
-          cop_config.merge('AllowBracesOnProceduralOneLiners' => true)
-        end
+        let(:cop_config) { cop_config.merge('AllowBracesOnProceduralOneLiners' => true) }
 
         it 'accepts a single line procedural block with braces' do
           expect_no_offenses('each { |x| puts x }')
@@ -295,8 +286,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'auto-corrects do-end to {} if it is a functional block and does ' \
-       'not change the meaning' do
+    it 'auto-corrects do-end to {} if it is a functional block and does not change the meaning' do
       expect_offense(<<~RUBY)
         puts (map do |x|
                   ^^ Prefer `{...}` over `do...end` for functional blocks.
@@ -310,13 +300,52 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
         })
       RUBY
     end
+
+    it 'auto-corrects do-end with `rescue` to {} if it is a functional block' do
+      expect_offense(<<~RUBY)
+        x = map do |a|
+                ^^ Prefer `{...}` over `do...end` for functional blocks.
+          do_something
+        rescue StandardError => e
+          puts 'oh no'
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        x = map { |a|
+          begin
+        do_something
+        rescue StandardError => e
+          puts 'oh no'
+        end
+        }
+      RUBY
+    end
+
+    it 'auto-corrects do-end with `ensure` to {} if it is a functional block' do
+      expect_offense(<<~RUBY)
+        x = map do |a|
+                ^^ Prefer `{...}` over `do...end` for functional blocks.
+          do_something
+        ensure
+          puts 'oh no'
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        x = map { |a|
+          begin
+        do_something
+        ensure
+          puts 'oh no'
+        end
+        }
+      RUBY
+    end
   end
 
-  context 'line count-based style' do
-    cop_config = {
-      'EnforcedStyle' => 'line_count_based',
-      'IgnoredMethods' => ['proc', /test/]
-    }
+  context 'EnforcedStyle: line_count_based' do
+    cop_config = { 'EnforcedStyle' => 'line_count_based', 'IgnoredMethods' => ['proc', /test/] }
 
     let(:cop_config) { cop_config }
 
@@ -367,6 +396,49 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
         RUBY
       end
 
+      it 'registers an offense when there is a comment after the closing brace and block body is not empty' do
+        expect_offense(<<~RUBY)
+          baz.map { |x|
+                  ^ Avoid using `{...}` for multi-line blocks.
+          foo(x) } # comment
+        RUBY
+
+        expect_correction(<<~RUBY)
+          # comment
+          baz.map do |x|
+          foo(x) end
+        RUBY
+      end
+
+      it 'registers an offense when there is a comment after the closing brace and using method chain' do
+        expect_offense(<<~RUBY)
+          baz.map { |x|
+                  ^ Avoid using `{...}` for multi-line blocks.
+          foo(x) }.qux.quux # comment
+        RUBY
+
+        expect_correction(<<~RUBY)
+          # comment
+          baz.map do |x|
+          foo(x) end.qux.quux
+        RUBY
+      end
+
+      it 'registers an offense when there is a comment after the closing brace and block body is empty' do
+        expect_offense(<<~RUBY)
+          baz.map { |x|
+                  ^ Avoid using `{...}` for multi-line blocks.
+          } # comment
+
+        RUBY
+
+        expect_correction(<<~RUBY)
+          # comment
+          baz.map do |x|
+          end
+        RUBY
+      end
+
       it 'accepts braces if do-end would change the meaning' do
         expect_no_offenses(<<~RUBY)
           scope :foo, lambda { |f|
@@ -388,8 +460,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
         RUBY
       end
 
-      it 'accepts a multi-line functional block with {} if it is ' \
-         'an ignored method' do
+      it 'accepts a multi-line functional block with {} if it is an ignored method' do
         expect_no_offenses(<<~RUBY)
           foo = proc {
             puts 42
@@ -405,8 +476,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
         RUBY
       end
 
-      it 'registers an offense for braces if do-end would not change ' \
-         'the meaning' do
+      it 'registers an offense for braces if do-end would not change the meaning' do
         expect_offense(<<~RUBY)
           scope :foo, (lambda { |f|
                               ^ Avoid using `{...}` for multi-line blocks.
@@ -474,13 +544,23 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
         RUBY
       end
     end
+
+    context 'with a single line do-end block with an inline `rescue`' do
+      it 'auto-corrects properly' do
+        expect_offense(<<~RUBY)
+          map do |x| x.y? rescue z end
+              ^^ Prefer `{...}` over `do...end` for single-line blocks.
+        RUBY
+
+        expect_correction(<<~RUBY)
+          map { |x| x.y? rescue z }
+        RUBY
+      end
+    end
   end
 
-  context 'braces for chaining style' do
-    cop_config = {
-      'EnforcedStyle' => 'braces_for_chaining',
-      'IgnoredMethods' => ['proc', /test/]
-    }
+  context 'EnforcedStyle: braces_for_chaining' do
+    cop_config = { 'EnforcedStyle' => 'braces_for_chaining', 'IgnoredMethods' => ['proc', /test/] }
 
     let(:cop_config) { cop_config }
 
@@ -499,8 +579,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'accepts a multi-line functional block with {} if it is ' \
-       'an ignored method' do
+    it 'accepts a multi-line functional block with {} if it is an ignored method' do
       expect_no_offenses(<<~RUBY)
         foo = proc {
           puts 42
@@ -601,13 +680,52 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
         RUBY
       end
     end
+
+    it 'auto-corrects do-end with `rescue` to {} if it is a functional block' do
+      expect_offense(<<~RUBY)
+        map do |a|
+            ^^ Prefer `{...}` over `do...end` for multi-line chained blocks.
+          do_something
+        rescue StandardError => e
+          puts 'oh no'
+        end.join('-')
+      RUBY
+
+      expect_correction(<<~RUBY)
+        map { |a|
+          begin
+        do_something
+        rescue StandardError => e
+          puts 'oh no'
+        end
+        }.join('-')
+      RUBY
+    end
+
+    it 'auto-corrects do-end with `ensure` to {} if it is a functional block' do
+      expect_offense(<<~RUBY)
+        map do |a|
+            ^^ Prefer `{...}` over `do...end` for multi-line chained blocks.
+          do_something
+        ensure
+          puts 'oh no'
+        end.join('-')
+      RUBY
+
+      expect_correction(<<~RUBY)
+        map { |a|
+          begin
+        do_something
+        ensure
+          puts 'oh no'
+        end
+        }.join('-')
+      RUBY
+    end
   end
 
-  context 'always braces' do
-    cop_config = {
-      'EnforcedStyle' => 'always_braces',
-      'IgnoredMethods' => ['proc', /test/]
-    }
+  context 'EnforcedStyle: always_braces' do
+    cop_config = { 'EnforcedStyle' => 'always_braces', 'IgnoredMethods' => ['proc', /test/] }
 
     let(:cop_config) { cop_config }
 
@@ -626,7 +744,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       expect_no_offenses('each { |x| }')
     end
 
-    it 'registers an offence for a multi-line block with do-end' do
+    it 'registers an offense for a multi-line block with do-end' do
       expect_offense(<<~RUBY)
         each do |x|
              ^^ Prefer `{...}` over `do...end` for blocks.
@@ -673,8 +791,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'accepts a multi-line functional block with do-end if it is ' \
-       'an ignored method' do
+    it 'accepts a multi-line functional block with do-end if it is an ignored method' do
       expect_no_offenses(<<~RUBY)
         foo = proc do
           puts 42
@@ -682,8 +799,7 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
       RUBY
     end
 
-    it 'accepts a multi-line functional block with do-end if it is ' \
-       'an ignored method by regex' do
+    it 'accepts a multi-line functional block with do-end if it is an ignored method by regex' do
       expect_no_offenses(<<~RUBY)
         foo = test_method do
           puts 42
@@ -713,13 +829,52 @@ RSpec.describe RuboCop::Cop::Style::BlockDelimiters, :config do
         RUBY
       end
     end
+
+    it 'auto-corrects do-end with `rescue` to {} if it is a functional block' do
+      expect_offense(<<~RUBY)
+        map do |a|
+            ^^ Prefer `{...}` over `do...end` for blocks.
+          do_something
+        rescue StandardError => e
+          puts 'oh no'
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        map { |a|
+          begin
+        do_something
+        rescue StandardError => e
+          puts 'oh no'
+        end
+        }
+      RUBY
+    end
+
+    it 'auto-corrects do-end with `ensure` to {} if it is a functional block' do
+      expect_offense(<<~RUBY)
+        map do |a|
+            ^^ Prefer `{...}` over `do...end` for blocks.
+          do_something
+        ensure
+          puts 'oh no'
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        map { |a|
+          begin
+        do_something
+        ensure
+          puts 'oh no'
+        end
+        }
+      RUBY
+    end
   end
 
   context 'BracesRequiredMethods' do
-    cop_config = {
-      'EnforcedStyle' => 'line_count_based',
-      'BracesRequiredMethods' => %w[sig]
-    }
+    cop_config = { 'EnforcedStyle' => 'line_count_based', 'BracesRequiredMethods' => %w[sig] }
 
     let(:cop_config) { cop_config }
 

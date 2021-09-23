@@ -70,20 +70,45 @@ module RuboCop
       def extract_first_element_over_column_limit(node, elements, max)
         line = node.first_line
 
-        # If the first argument is a hash pair but the method is not parenthesized,
-        # the argument cannot be moved to another line because it cause a syntax error.
-        elements.shift if node.send_type? && !node.parenthesized? && elements.first.pair_type?
+        # If a `send` node is not parenthesized, don't move the first element, because it
+        # can result in changed behavior or a syntax error.
+        if node.send_type? && !node.parenthesized? && !first_argument_is_heredoc?(node)
+          elements = elements.drop(1)
+        end
 
         i = 0
         i += 1 while within_column_limit?(elements[i], max, line)
+        i = shift_elements_for_heredoc_arg(node, elements, i)
+
+        return if i.nil?
         return elements.first if i.zero?
 
         elements[i - 1]
       end
 
       # @api private
+      def first_argument_is_heredoc?(node)
+        first_argument = node.first_argument
+
+        first_argument.respond_to?(:heredoc?) && first_argument.heredoc?
+      end
+
+      # @api private
+      # If a send node contains a heredoc argument, splitting cannot happen
+      # after the heredoc or else it will cause a syntax error.
+      def shift_elements_for_heredoc_arg(node, elements, index)
+        return index unless node.send_type? || node.array_type?
+
+        heredoc_index = elements.index { |arg| arg.respond_to?(:heredoc?) && arg.heredoc? }
+        return index unless heredoc_index
+        return nil if heredoc_index.zero?
+
+        heredoc_index >= index ? index : heredoc_index + 1
+      end
+
+      # @api private
       def within_column_limit?(element, max, line)
-        element && element.loc.column < max && element.loc.line == line
+        element && element.loc.column <= max && element.loc.line == line
       end
 
       # @api private

@@ -15,20 +15,44 @@ module RuboCop
       # lines, this cop does not register an offense; instead,
       # `Style/LineEndConcatenation` will pick up the offense if enabled.
       #
-      # @example
+      # Two modes are supported:
+      # 1. `aggressive` style checks and corrects all occurrences of `+` where
+      # either the left or right side of `+` is a string literal.
+      # 2. `conservative` style on the other hand, checks and corrects only if
+      # left side (receiver of `+` method call) is a string literal.
+      # This is useful when the receiver is some expression that returns string like `Pathname`
+      # instead of a string literal.
+      #
+      # @safety
+      #   This cop is unsafe in `aggressive` mode, as it cannot be guaranteed that
+      #   the receiver is actually a string, which can result in a false positive.
+      #
+      # @example Mode: aggressive (default)
       #   # bad
       #   email_with_name = user.name + ' <' + user.email + '>'
+      #   Pathname.new('/') + 'test'
       #
       #   # good
       #   email_with_name = "#{user.name} <#{user.email}>"
       #   email_with_name = format('%s <%s>', user.name, user.email)
+      #   "#{Pathname.new('/')}test"
       #
       #   # accepted, line-end concatenation
       #   name = 'First' +
       #     'Last'
       #
+      # @example Mode: conservative
+      #   # bad
+      #   'Hello' + user.name
+      #
+      #   # good
+      #   "Hello #{user.name}"
+      #   user.name + '!!'
+      #   Pathname.new('/') + 'test'
+      #
       class StringConcatenation < Base
         include Util
+        include RangeHelp
         extend AutoCorrector
 
         MSG = 'Prefer string interpolation to string concatenation.'
@@ -51,10 +75,15 @@ module RuboCop
           return if line_end_concatenation?(node)
 
           topmost_plus_node = find_topmost_plus_node(node)
+          parts = collect_parts(topmost_plus_node)
+          return unless parts[0..-2].any? { |receiver_node| offensive_for_mode?(receiver_node) }
 
-          parts = []
-          collect_parts(topmost_plus_node, parts)
+          register_offense(topmost_plus_node, parts)
+        end
 
+        private
+
+        def register_offense(topmost_plus_node, parts)
           add_offense(topmost_plus_node) do |corrector|
             correctable_parts = parts.none? { |part| uncorrectable?(part) }
             if correctable_parts && !corrected_ancestor?(topmost_plus_node)
@@ -66,7 +95,10 @@ module RuboCop
           end
         end
 
-        private
+        def offensive_for_mode?(receiver_node)
+          mode = cop_config['Mode'].to_sym
+          mode == :aggressive || (mode == :conservative && receiver_node.str_type?)
+        end
 
         def line_end_concatenation?(node)
           # If the concatenation happens at the end of the line,
@@ -86,7 +118,7 @@ module RuboCop
           current
         end
 
-        def collect_parts(node, parts)
+        def collect_parts(node, parts = [])
           return unless node
 
           if plus_node?(node)
@@ -102,10 +134,7 @@ module RuboCop
         end
 
         def uncorrectable?(part)
-          part.multiline? ||
-            part.dstr_type? ||
-            (part.str_type? && part.heredoc?) ||
-            part.each_descendant(:block).any?
+          part.multiline? || (part.str_type? && part.heredoc?) || part.each_descendant(:block).any?
         end
 
         def corrected_ancestor?(node)
@@ -115,12 +144,12 @@ module RuboCop
         def replacement(parts)
           interpolated_parts =
             parts.map do |part|
-              if part.str_type?
-                if single_quoted?(part)
-                  part.value.gsub(/(\\|")/, '\\\\\&')
-                else
-                  part.value.inspect[1..-2]
-                end
+              case part.type
+              when :str
+                value = part.value
+                single_quoted?(part) ? value.gsub(/(\\|")/, '\\\\\&') : value.inspect[1..-2]
+              when :dstr
+                contents_range(part).source
               else
                 "\#{#{part.source}}"
               end

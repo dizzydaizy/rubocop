@@ -8,15 +8,31 @@ module RuboCop
 
       FROZEN_STRING_LITERAL = '# frozen_string_literal:'
       FROZEN_STRING_LITERAL_ENABLED = '# frozen_string_literal: true'
-      FROZEN_STRING_LITERAL_TYPES = %i[str dstr].freeze
+      FROZEN_STRING_LITERAL_TYPES_RUBY27 = %i[str dstr].freeze
+
+      private_constant :FROZEN_STRING_LITERAL_TYPES_RUBY27
 
       def frozen_string_literal_comment_exists?
-        leading_comment_lines.any? do |line|
-          MagicComment.parse(line).valid_literal_value?
-        end
+        leading_comment_lines.any? { |line| MagicComment.parse(line).valid_literal_value? }
       end
 
       private
+
+      def frozen_string_literal?(node)
+        frozen_string = if target_ruby_version >= 3.0
+                          node.str_type? || frozen_heredoc?(node)
+                        else
+                          FROZEN_STRING_LITERAL_TYPES_RUBY27.include?(node.type)
+                        end
+
+        frozen_string && frozen_string_literals_enabled?
+      end
+
+      def frozen_heredoc?(node)
+        return false unless node.dstr_type? && node.heredoc?
+
+        node.children.all?(&:str_type?)
+      end
 
       def frozen_string_literals_enabled?
         ruby_version = processed_source.ruby_version
@@ -34,8 +50,12 @@ module RuboCop
         # And the above `ruby_version >= 3.1` is undecided whether it will be
         # Ruby 3.1, 3.2, 4.0 or others.
         # See https://bugs.ruby-lang.org/issues/8976#note-41 for details.
+        leading_comment_lines.any? { |line| MagicComment.parse(line).frozen_string_literal? }
+      end
+
+      def frozen_string_literals_disabled?
         leading_comment_lines.any? do |line|
-          MagicComment.parse(line).frozen_string_literal?
+          MagicComment.parse(line).frozen_string_literal == false
         end
       end
 
@@ -46,9 +66,7 @@ module RuboCop
       end
 
       def leading_comment_lines
-        first_non_comment_token = processed_source.tokens.find do |token|
-          !token.comment?
-        end
+        first_non_comment_token = processed_source.tokens.find { |token| !token.comment? }
 
         if first_non_comment_token
           # `line` is 1-indexed so we need to subtract 1 to get the array index

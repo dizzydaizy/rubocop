@@ -5,6 +5,9 @@ module RuboCop
     module Style
       # Checks for `if` expressions that do not have an `else` branch.
       #
+      # NOTE: Pattern matching is allowed to have no `else` branch because unlike `if` and `case`,
+      # it raises `NoMatchingPatternError` if the pattern doesn't match and without having `else`.
+      #
       # Supported styles are: if, case, both.
       #
       # @example EnforcedStyle: if
@@ -98,10 +101,8 @@ module RuboCop
         include ConfigurableEnforcedStyle
 
         MSG = '`%<type>s` condition requires an `else`-clause.'
-        MSG_NIL = '`%<type>s` condition requires an `else`-clause with ' \
-                  '`nil` in it.'
-        MSG_EMPTY = '`%<type>s` condition requires an empty ' \
-                    '`else`-clause.'
+        MSG_NIL = '`%<type>s` condition requires an `else`-clause with `nil` in it.'
+        MSG_EMPTY = '`%<type>s` condition requires an empty `else`-clause.'
 
         def on_normal_if_unless(node)
           return if case_style?
@@ -114,6 +115,10 @@ module RuboCop
           return if if_style?
 
           check(node)
+        end
+
+        def on_case_match(node)
+          # do nothing.
         end
 
         private

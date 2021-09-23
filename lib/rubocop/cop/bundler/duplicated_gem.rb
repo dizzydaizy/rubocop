@@ -39,7 +39,7 @@ module RuboCop
         include RangeHelp
 
         MSG = 'Gem `%<gem_name>s` requirements already given on line '\
-          '%<line_of_first_occurrence>d of the Gemfile.'
+              '%<line_of_first_occurrence>d of the Gemfile.'
 
         def on_new_investigation
           return if processed_source.blank?
@@ -83,8 +83,7 @@ module RuboCop
 
         def register_offense(node, gem_name, line_of_first_occurrence)
           line_range = node.loc.column...node.loc.last_column
-          offense_location =
-            source_range(processed_source.buffer, node.first_line, line_range)
+          offense_location = source_range(processed_source.buffer, node.first_line, line_range)
           message = format(
             MSG,
             gem_name: gem_name,

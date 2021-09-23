@@ -206,6 +206,11 @@ RSpec.describe RuboCop::Cop::Style::RedundantSort, :config do
     expect_no_offenses('[1, 2, 3].sort.first(1)')
   end
 
+  # Some gems like mongo provides sort method with an argument
+  it 'does not register an offense when sort has an argument' do
+    expect_no_offenses('mongo_client["users"].find.sort(_id: 1).first')
+  end
+
   it 'does not register an offense for sort!.first' do
     expect_no_offenses('[1, 2, 3].sort!.first')
   end
@@ -226,7 +231,17 @@ RSpec.describe RuboCop::Cop::Style::RedundantSort, :config do
     expect_no_offenses('[[1, 2], [3, 4]].first.sort')
   end
 
-  # `[2, 1, 3].sort_by.first` is equivalent to `[2, 1, 3].first`, but this
+  # `[3, 1, 2].sort_by(&:size).last` is equivalent to `[3, 1, 2].max_by(&:size)`.
+  it 'does not register an offense when using `sort_by(&:size).last`' do
+    expect_no_offenses('[2, 1, 3].sort_by(&:size).last')
+  end
+
+  # `[3, 1, 2].sort_by { |i| i.size }.last` is equivalent to `[3, 1, 2].max_by { |i| i.size }`.
+  it 'does not register an offense when using `sort_by { |i| i.size }.last`' do
+    expect_no_offenses('[2, 1, 3].sort_by { |i| i.size }.last')
+  end
+
+  # `[2, 1, 3].sort_by(&:size).first` is not equivalent to `[2, 1, 3].first`, but this
   # cop would "correct" it to `[2, 1, 3].min_by`.
   it 'does not register an offense when sort_by is not given a block' do
     expect_no_offenses('[2, 1, 3].sort_by.first')
@@ -240,12 +255,15 @@ RSpec.describe RuboCop::Cop::Style::RedundantSort, :config do
     it 'does not register an offense when at(-2) is called on sort_by' do
       expect_no_offenses('[1, 2, 3].sort_by(&:foo).at(-2)')
     end
+
+    it 'does not register an offense when [-1] is called on sort with an argument' do
+      expect_no_offenses('mongo_client["users"].find.sort(_id: 1)[-1]')
+    end
   end
 
   context '>= Ruby 2.7', :ruby27 do
     context 'when using numbered parameter' do
-      it 'registers an offense and corrects when last is called on sort with ' \
-         'comparator' do
+      it 'registers an offense and corrects when last is called on sort with comparator' do
         expect_offense(<<~RUBY)
           foo.sort { _2 <=> _1 }.last
               ^^^^^^^^^^^^^^^^^^^^^^^ Use `max` instead of `sort...last`.

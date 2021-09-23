@@ -20,9 +20,7 @@ RSpec.describe RuboCop::ConfigLoader do
   let(:default_config) { described_class.default_configuration }
 
   describe '.configuration_file_for', :isolated_environment do
-    subject(:configuration_file_for) do
-      described_class.configuration_file_for(dir_path)
-    end
+    subject(:configuration_file_for) { described_class.configuration_file_for(dir_path) }
 
     context 'when no config file exists in ancestor directories' do
       let(:dir_path) { 'dir' }
@@ -41,9 +39,7 @@ RSpec.describe RuboCop::ConfigLoader do
         before { create_empty_file('~/.config/rubocop/config.yml') }
 
         it 'returns the path to the file in XDG directory' do
-          expect(configuration_file_for).to end_with(
-            'home/.config/rubocop/config.yml'
-          )
+          expect(configuration_file_for).to end_with('home/.config/rubocop/config.yml')
         end
       end
 
@@ -54,9 +50,7 @@ RSpec.describe RuboCop::ConfigLoader do
         end
 
         it 'returns the path to the file in XDG directory' do
-          expect(configuration_file_for).to end_with(
-            'home/xdg-stuff/rubocop/config.yml'
-          )
+          expect(configuration_file_for).to end_with('home/xdg-stuff/rubocop/config.yml')
         end
       end
 
@@ -135,9 +129,7 @@ RSpec.describe RuboCop::ConfigLoader do
   end
 
   describe '.configuration_from_file', :isolated_environment do
-    subject(:configuration_from_file) do
-      described_class.configuration_from_file(file_path)
-    end
+    subject(:configuration_from_file) { described_class.configuration_from_file(file_path) }
 
     context 'with any config file' do
       let(:file_path) { '.rubocop.yml' }
@@ -277,6 +269,9 @@ RSpec.describe RuboCop::ConfigLoader do
             Exclude:
               - vendor/**
               - !ruby/regexp /[A-Z]/
+          Style/StringLiterals:
+            Include:
+              - dir/**/*.rb
         YAML
 
         create_file(file_path, ['inherit_from: ../.rubocop.yml'])
@@ -285,6 +280,10 @@ RSpec.describe RuboCop::ConfigLoader do
       it 'gets an absolute AllCops/Exclude' do
         excludes = configuration_from_file['AllCops']['Exclude']
         expect(excludes).to eq([File.expand_path('vendor/**'), /[A-Z]/])
+      end
+
+      it 'gets an Include that is relative to the subdirectory' do
+        expect(configuration_from_file['Style/StringLiterals']['Include']).to eq(['**/*.rb'])
       end
 
       it 'ignores parent AllCops/Exclude if ignore_parent_exclusion is true' do
@@ -328,6 +327,9 @@ RSpec.describe RuboCop::ConfigLoader do
           AllCops:
             Exclude:
               - vendor/**
+          Style/StringLiterals:
+            Include:
+              - '**/*.rb'
         YAML
 
         create_file(file_path, ['inherit_from: ../src/.rubocop.yml'])
@@ -337,37 +339,47 @@ RSpec.describe RuboCop::ConfigLoader do
         excludes = configuration_from_file['AllCops']['Exclude']
         expect(excludes).to eq([File.expand_path('src/vendor/**')])
       end
+
+      it 'gets an Include that is relative to the subdirectory' do
+        expect(configuration_from_file['Style/StringLiterals']['Include']).to eq(['../src/**/*.rb'])
+      end
     end
 
     context 'when a file inherits and overrides an Exclude' do
       let(:file_path) { '.rubocop.yml' }
       let(:message) do
         '.rubocop.yml: Style/For:Exclude overrides the same parameter in ' \
-        '.rubocop_todo.yml'
+          '.rubocop_2.yml'
       end
 
       before do
         create_file(file_path, <<~YAML)
-          inherit_from: .rubocop_todo.yml
+          inherit_from:
+            - .rubocop_1.yml
+            - .rubocop_2.yml
 
           Style/For:
             Exclude:
               - spec/requests/group_invite_spec.rb
         YAML
 
-        create_file('.rubocop_todo.yml', <<~YAML)
+        create_file('.rubocop_1.yml', <<~YAML)
+          Style/StringLiterals:
+            Exclude:
+              - 'spec/models/group_spec.rb'
+        YAML
+
+        create_file('.rubocop_2.yml', <<~YAML)
           Style/For:
             Exclude:
               - 'spec/models/expense_spec.rb'
-              - 'spec/models/group_spec.rb'
         YAML
       end
 
       it 'gets the Exclude overriding the inherited one with a warning' do
         expect do
           excludes = configuration_from_file['Style/For']['Exclude']
-          expect(excludes)
-            .to eq([File.expand_path('spec/requests/group_invite_spec.rb')])
+          expect(excludes).to eq([File.expand_path('spec/requests/group_invite_spec.rb')])
         end.to output(/#{message}/).to_stdout
       end
     end
@@ -399,15 +411,8 @@ RSpec.describe RuboCop::ConfigLoader do
       end
 
       it 'removes hash keys with nil values' do
-        inverse_methods =
-          configuration_from_file['Style/InverseMethods']['InverseMethods']
-        expect(inverse_methods).to eq(
-          '==': :!=,
-          '=~': :!~,
-          any?: :none?,
-          even?: :odd?,
-          foo: :bar
-        )
+        inverse_methods = configuration_from_file['Style/InverseMethods']['InverseMethods']
+        expect(inverse_methods).to eq('==': :!=, '=~': :!~, any?: :none?, even?: :odd?, foo: :bar)
       end
     end
 
@@ -464,8 +469,7 @@ RSpec.describe RuboCop::ConfigLoader do
                   default_config['AllCops']['Exclude']).sort)
       end
 
-      it 'merges Style/Documentation:Exclude with parent and ' \
-         'default configuration' do
+      it 'merges Style/Documentation:Exclude with parent and default configuration' do
         expect(configuration_from_file['Style/Documentation']['Exclude'].sort)
           .to eq(([File.expand_path('funk/*.rb'),
                    File.expand_path('junk/*.rb')] +
@@ -515,7 +519,7 @@ RSpec.describe RuboCop::ConfigLoader do
       end
 
       it 'unions the two lists of Excludes from the parent and child configs ' \
-          'for cops that do not override the inherit_mode' do
+         'for cops that do not override the inherit_mode' do
         expect do
           excludes = configuration_from_file['Style/For']['Exclude']
           expect(excludes.sort)
@@ -525,24 +529,76 @@ RSpec.describe RuboCop::ConfigLoader do
         end.not_to output(/overrides the same parameter/).to_stdout
       end
 
-      it 'overwrites the Exclude from the parent when the cop overrides' \
-          'the global inherit_mode' do
+      it 'overwrites the Exclude from the parent when the cop overridesthe global inherit_mode' do
         expect do
           excludes = configuration_from_file['Style/Dir']['Exclude']
-          expect(excludes)
-            .to eq([File.expand_path('spec/requests/group_invite_spec.rb')])
+          expect(excludes).to eq([File.expand_path('spec/requests/group_invite_spec.rb')])
         end.not_to output(/overrides the same parameter/).to_stdout
+      end
+    end
+
+    context 'when inherit_mode is specified for a nested element even ' \
+            'without explicitly specifying `inherit_from`/`inherit_gem`' do
+      let(:file_path) { '.rubocop.yml' }
+
+      before do
+        stub_const('RuboCop::ConfigLoader::RUBOCOP_HOME', 'rubocop')
+        stub_const('RuboCop::ConfigLoader::DEFAULT_FILE',
+                   File.join('rubocop', 'config', 'default.yml'))
+
+        create_file('rubocop/config/default.yml', <<~YAML)
+          Language:
+            Examples:
+              inherit_mode:
+                merge:
+                  - Regular
+                  - Focused
+              Regular:
+                - it
+              Focused:
+                - fit
+              Skipped:
+                - xit
+              Pending:
+                - pending
+        YAML
+        create_file(file_path, <<~YAML)
+          Language:
+            Examples:
+              inherit_mode:
+                merge:
+                  - Skipped
+                override:
+                  - Focused
+              Regular:
+                - scenario
+              Focused:
+                - fscenario
+              Skipped:
+                - xscenario
+              Pending:
+                - later
+        YAML
+      end
+
+      it 'respects the priority of `inherit_mode`, user-defined first' do
+        examples_configuration = configuration_from_file['Language']['Examples']
+        expect(examples_configuration['Regular']).to contain_exactly('it', 'scenario')
+        expect(examples_configuration['Focused']).to contain_exactly('fscenario')
+        expect(examples_configuration['Skipped']).to contain_exactly('xit', 'xscenario')
+        expect(examples_configuration['Pending']).to contain_exactly('later')
       end
     end
 
     context 'when a department is disabled', :restore_registry do
       let(:file_path) { '.rubocop.yml' }
 
-      shared_examples 'resolves enabled/disabled for all cops' do |enabled_by_default, disabled_by_default|
+      shared_examples 'resolves enabled/disabled for all ' \
+                      'cops' do |enabled_by_default, disabled_by_default, custom_dept_to_disable|
         before { stub_cop_class('RuboCop::Cop::Foo::Bar::Baz') }
 
         it "handles EnabledByDefault: #{enabled_by_default}, " \
-           "DisabledByDefault: #{disabled_by_default}" do
+           "DisabledByDefault: #{disabled_by_default} with disabled #{custom_dept_to_disable}" do
           create_file('grandparent_rubocop.yml', <<~YAML)
             Naming/FileName:
               Enabled: pending
@@ -571,7 +627,7 @@ RSpec.describe RuboCop::ConfigLoader do
             Naming:
               Enabled: false
 
-            Foo/Bar:
+            #{custom_dept_to_disable}:
               Enabled: false
           YAML
           create_file(file_path, <<~YAML)
@@ -599,6 +655,15 @@ RSpec.describe RuboCop::ConfigLoader do
 
           def enabled?(cop)
             configuration_from_file.for_cop(cop)['Enabled']
+          end
+
+          if custom_dept_to_disable == 'Foo'
+            message = <<~'OUTPUT'.chomp
+              unrecognized cop or department Foo found in parent_rubocop.yml
+              Foo is not a department. Use `Foo/Bar`.
+            OUTPUT
+            expect { enabled?('Foo/Bar/Baz') }.to raise_error(RuboCop::ValidationError, message)
+            next
           end
 
           # Department disabled in parent config, cop enabled in child.
@@ -639,9 +704,10 @@ RSpec.describe RuboCop::ConfigLoader do
         end
       end
 
-      include_examples 'resolves enabled/disabled for all cops', false, false
-      include_examples 'resolves enabled/disabled for all cops', false, true
-      include_examples 'resolves enabled/disabled for all cops', true, false
+      include_examples 'resolves enabled/disabled for all cops', false, false, 'Foo/Bar'
+      include_examples 'resolves enabled/disabled for all cops', false, true, 'Foo/Bar'
+      include_examples 'resolves enabled/disabled for all cops', true, false, 'Foo/Bar'
+      include_examples 'resolves enabled/disabled for all cops', false, false, 'Foo'
     end
 
     context 'when a third party require defines a new gem', :restore_registry do
@@ -736,7 +802,6 @@ RSpec.describe RuboCop::ConfigLoader do
               default_config['Layout/LineLength']['VersionAdded'],
               'VersionChanged' =>
               default_config['Layout/LineLength']['VersionChanged'],
-              'AutoCorrect' => true,
               'Max' => 77,
               'AllowHeredoc' => true,
               'AllowURI' => true,
@@ -760,9 +825,7 @@ RSpec.describe RuboCop::ConfigLoader do
               'ExcludedMethods' => []
             }
           )
-        expect do
-          expect(configuration_from_file.to_h).to eq(config)
-        end.to output('').to_stderr
+        expect { expect(configuration_from_file.to_h).to eq(config) }.to output('').to_stderr
       end
     end
 
@@ -803,9 +866,9 @@ RSpec.describe RuboCop::ConfigLoader do
           expect(configuration_from_file['Metrics/MethodLength']
                    .to_set.superset?(expected.to_set)).to be(true)
         end.to output(Regexp.new(<<~OUTPUT)).to_stdout
-          .rubocop.yml: Metrics/MethodLength:Enabled overrides the same parameter in normal.yml
           .rubocop.yml: Metrics/MethodLength:Enabled overrides the same parameter in special.yml
-          .rubocop.yml: Metrics/MethodLength:Max overrides the same parameter in special.yml
+          .rubocop.yml: Metrics/MethodLength:Enabled overrides the same parameter in normal.yml
+          .rubocop.yml: Metrics/MethodLength:Max overrides the same parameter in normal.yml
         OUTPUT
       end
     end
@@ -842,7 +905,6 @@ RSpec.describe RuboCop::ConfigLoader do
               default_config['Layout/LineLength']['VersionAdded'],
               'VersionChanged' =>
               default_config['Layout/LineLength']['VersionChanged'],
-              'AutoCorrect' => true,
               'Max' => 120,             # overridden in line_length.yml
               'AllowHeredoc' => false,  # overridden in rubocop.yml
               'AllowURI' => true,
@@ -1022,8 +1084,7 @@ RSpec.describe RuboCop::ConfigLoader do
         create_file("#{gem_root}/#{gem_name}/default.yml", ["Layout/LineLength:\n    Max: 48"])
 
         mock_spec = OpenStruct.new(gem_dir: File.join(gem_root, gem_name))
-        allow(Gem::Specification).to receive(:find_by_name)
-          .with(gem_name).and_return(mock_spec)
+        allow(Gem::Specification).to receive(:find_by_name).with(gem_name).and_return(mock_spec)
         allow(Gem).to receive(:path).and_return([gem_root])
       end
 
@@ -1101,9 +1162,7 @@ RSpec.describe RuboCop::ConfigLoader do
 
       let(:file_path) { '.rubocop.yml' }
 
-      before do
-        create_file(file_path, config)
-      end
+      before { create_file(file_path, config) }
 
       context 'when DisabledByDefault is true' do
         let(:config) do
@@ -1117,7 +1176,7 @@ RSpec.describe RuboCop::ConfigLoader do
         end
 
         it 'enables cops that are explicitly in the config file '\
-          'even if they are disabled by default' do
+           'even if they are disabled by default' do
           cop_class = RuboCop::Cop::Style::Copyright
           expect(cop_enabled?(cop_class)).to be true
         end
@@ -1353,9 +1412,7 @@ RSpec.describe RuboCop::ConfigLoader do
   end
 
   describe '.load_file', :isolated_environment do
-    subject(:load_file) do
-      described_class.load_file(configuration_path, check: check)
-    end
+    subject(:load_file) { described_class.load_file(configuration_path, check: check) }
 
     let(:configuration_path) { '.rubocop.yml' }
     let(:check) { true }
@@ -1366,9 +1423,7 @@ RSpec.describe RuboCop::ConfigLoader do
           Enabled: true
       YAML
       configuration = load_file
-      expect(configuration['Style/Encoding']).to eq(
-        'Enabled' => true
-      )
+      expect(configuration['Style/Encoding']).to eq('Enabled' => true)
     end
 
     it 'does ERB pre-processing of the configuration file' do
@@ -1397,8 +1452,7 @@ RSpec.describe RuboCop::ConfigLoader do
           <% end %>
       YAML
       configuration = described_class.load_file('dir/.rubocop.yml')
-      expect(configuration['Style/Encoding'])
-        .to eq('Exclude' => [abs('dir/c.rb')])
+      expect(configuration['Style/Encoding']).to eq('Exclude' => [abs('dir/c.rb')])
     end
 
     it 'fails with a TypeError when loading a malformed configuration file' do
@@ -1408,7 +1462,7 @@ RSpec.describe RuboCop::ConfigLoader do
       )
     end
 
-    it 'loads configuration properly when it includes non-ascii characters ' do
+    it 'loads configuration properly when it includes non-ascii characters' do
       create_file(configuration_path, <<~YAML)
         # All these cops of mine are ❤
         Style/Encoding:
@@ -1483,9 +1537,7 @@ RSpec.describe RuboCop::ConfigLoader do
               Enabled: false
           YAML
 
-          expect do
-            load_file
-          end.to output(%r{`Style/Encoding` is concealed by duplicat}).to_stderr
+          expect { load_file }.to output(%r{`Style/Encoding` is concealed by duplicat}).to_stderr
         end
       end
     end
@@ -1501,9 +1553,7 @@ RSpec.describe RuboCop::ConfigLoader do
               Enabled: false
           YAML
 
-          expect do
-            load_file
-          end.to output(%r{`Style/Encoding` is concealed by line 4}).to_stderr
+          expect { load_file }.to output(%r{`Style/Encoding` is concealed by line 4}).to_stderr
         end
       end
     end
@@ -1546,9 +1596,7 @@ RSpec.describe RuboCop::ConfigLoader do
         }
       }
     end
-    let(:derived) do
-      { 'AllCops' => { 'Exclude' => ['example.rb', 'exclude_*'] } }
-    end
+    let(:derived) { { 'AllCops' => { 'Exclude' => ['example.rb', 'exclude_*'] } } }
 
     it 'returns a recursive merge of its two arguments' do
       expect(merge).to eq('AllCops' => {
@@ -1566,8 +1614,7 @@ RSpec.describe RuboCop::ConfigLoader do
       described_class.configuration_from_file(config_path)
     end
 
-    context 'when .rubocop.yml inherits from a file with a name starting ' \
-            'with .rubocop' do
+    context 'when .rubocop.yml inherits from a file with a name starting with .rubocop' do
       before do
         create_file('test/.rubocop_rules.yml', <<~YAML)
           Style/CharacterLiteral:
@@ -1577,8 +1624,7 @@ RSpec.describe RuboCop::ConfigLoader do
         create_file('test/.rubocop.yml', 'inherit_from: .rubocop_rules.yml')
       end
 
-      it 'gets an Exclude relative to the inherited file converted to ' \
-         'absolute' do
+      it 'gets an Exclude relative to the inherited file converted to absolute' do
         expect(config.for_cop(RuboCop::Cop::Style::CharacterLiteral)['Exclude'])
           .to eq([File.join(Dir.pwd, 'test/blargh/blah.rb')])
       end
@@ -1586,9 +1632,7 @@ RSpec.describe RuboCop::ConfigLoader do
   end
 
   describe 'when pending cops exist', :isolated_environment do
-    subject(:from_file) do
-      described_class.configuration_from_file('.rubocop.yml')
-    end
+    subject(:from_file) { described_class.configuration_from_file('.rubocop.yml') }
 
     before do
       create_empty_file('.rubocop.yml')
@@ -1600,13 +1644,7 @@ RSpec.describe RuboCop::ConfigLoader do
     end
 
     context 'when NewCops is set in a required file' do
-      let(:parent_config) do
-        {
-          'AllCops' => {
-            'NewCops' => 'enable'
-          }
-        }
-      end
+      let(:parent_config) { { 'AllCops' => { 'NewCops' => 'enable' } } }
 
       it 'does not print a warning' do
         expect(described_class).not_to receive(:warn_on_pending_cops)
@@ -1615,13 +1653,7 @@ RSpec.describe RuboCop::ConfigLoader do
     end
 
     context 'when NewCops is not configured in a required file' do
-      let(:parent_config) do
-        {
-          'AllCops' => {
-            'Exclude:' => ['coverage/**/*']
-          }
-        }
-      end
+      let(:parent_config) { { 'AllCops' => { 'Exclude:' => ['coverage/**/*'] } } }
 
       it 'prints a warning' do
         expect(described_class).to receive(:warn_on_pending_cops)
@@ -1634,8 +1666,7 @@ RSpec.describe RuboCop::ConfigLoader do
     describe 'AllowSafeAssignment' do
       it 'is enabled by default' do
         default_config = described_class.default_configuration
-        symbol_name_config =
-          default_config.for_cop('Lint/AssignmentInCondition')
+        symbol_name_config = default_config.for_cop('Lint/AssignmentInCondition')
         expect(symbol_name_config['AllowSafeAssignment']).to be_truthy
       end
     end

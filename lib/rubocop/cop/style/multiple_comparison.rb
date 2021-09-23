@@ -44,7 +44,7 @@ module RuboCop
         extend AutoCorrector
 
         MSG = 'Avoid comparing a variable with multiple items ' \
-          'in a conditional, use `Array#include?` instead.'
+              'in a conditional, use `Array#include?` instead.'
 
         def on_new_investigation
           @last_comparison = nil
@@ -92,9 +92,7 @@ module RuboCop
 
         def variables_in_node(node)
           if node.or_type?
-            node.node_parts
-                .flat_map { |node_part| variables_in_node(node_part) }
-                .uniq
+            node.node_parts.flat_map { |node_part| variables_in_node(node_part) }.uniq
           else
             variables_in_simple_node(node)
           end
@@ -142,7 +140,7 @@ module RuboCop
         def switch_comparison?(node)
           return true if @last_comparison.nil?
 
-          @last_comparison.descendants.none? { |descendant| descendant == node }
+          @last_comparison.descendants.none?(node)
         end
 
         def reset_comparison

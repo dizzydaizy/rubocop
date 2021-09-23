@@ -19,6 +19,7 @@ module RuboCop
         extend AutoCorrector
 
         MSG = 'Remove the space before the opening brackets.'
+        RESTRICT_ON_SEND = %i[[] []=].freeze
 
         def on_send(node)
           return unless (first_argument = node.first_argument)
@@ -53,9 +54,7 @@ module RuboCop
         end
 
         def register_offense(range)
-          add_offense(range) do |corrector|
-            corrector.remove(range)
-          end
+          add_offense(range) { |corrector| corrector.remove(range) }
         end
 
         def reference_variable_with_brackets?(node)

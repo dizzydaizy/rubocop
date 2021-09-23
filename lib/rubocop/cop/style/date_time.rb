@@ -9,6 +9,11 @@ module RuboCop
       # replaceable in certain situations when dealing with multiple timezones
       # and/or DST.
       #
+      # @safety
+      #   Autocorrection is not safe, because `DateTime` and `Time` do not have
+      #   exactly the same behaviour, although in most cases the autocorrection
+      #   will be fine.
+      #
       # @example
       #
       #   # bad - uses `DateTime` for current time
@@ -63,15 +68,12 @@ module RuboCop
         PATTERN
 
         def on_send(node)
-          return unless date_time?(node) ||
-                        (to_datetime?(node) && disallow_coercion?)
+          return unless date_time?(node) || (to_datetime?(node) && disallow_coercion?)
           return if historic_date?(node)
 
           message = to_datetime?(node) ? COERCION_MSG : CLASS_MSG
 
-          add_offense(node, message: message) do |corrector|
-            autocorrect(corrector, node)
-          end
+          add_offense(node, message: message) { |corrector| autocorrect(corrector, node) }
         end
 
         private

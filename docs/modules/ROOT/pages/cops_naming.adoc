@@ -509,13 +509,149 @@ EOS
 
 * https://rubystyle.guide#heredoc-delimiters
 
+== Naming/InclusiveLanguage
+
+|===
+| Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
+
+| Disabled
+| Yes
+| No
+| 1.18
+| 1.21
+|===
+
+This cops recommends the use of inclusive language instead of problematic terms.
+The cop can check the following locations for offenses:
+- identifiers
+- constants
+- variables
+- strings
+- symbols
+- comments
+- file paths
+Each of these locations can be individually enabled/disabled via configuration,
+for example CheckIdentifiers = true/false.
+
+Flagged terms are configurable for the cop. For each flagged term an optional
+Regex can be specified to identify offenses. Suggestions for replacing a flagged term can
+be configured and will be displayed as part of the offense message.
+An AllowedRegex can be specified for a flagged term to exempt allowed uses of the term.
+`WholeWord: true` can be set on a flagged term to indicate the cop should only match when
+a term matches the whole word (partial matches will not be offenses).
+
+=== Examples
+
+==== FlaggedTerms: { whitelist: { Suggestions: ['allowlist'] } }
+
+[source,ruby]
+----
+# Suggest replacing identifier whitelist with allowlist
+
+# bad
+whitelist_users = %w(user1 user1)
+
+# good
+allowlist_users = %w(user1 user2)
+----
+
+==== FlaggedTerms: { master: { Suggestions: ['main', 'primary', 'leader'] } }
+
+[source,ruby]
+----
+# Suggest replacing master in an instance variable name with main, primary, or leader
+
+# bad
+@master_node = 'node1.example.com'
+
+# good
+@primary_node = 'node1.example.com'
+----
+
+==== FlaggedTerms: { whitelist: { Regex: !ruby/regexp '/white[-_\s]?list' } }
+
+[source,ruby]
+----
+# Identify problematic terms using a Regexp
+
+# bad
+white_list = %w(user1 user2)
+
+# good
+allow_list = %w(user1 user2)
+----
+
+==== FlaggedTerms: { master: { AllowedRegex: 'master\'?s degree' } }
+
+[source,ruby]
+----
+# Specify allowed uses of the flagged term as a string or regexp.
+
+# bad
+# They had a masters
+
+# good
+# They had a master's degree
+----
+
+==== FlaggedTerms: { slave: { WholeWord: true } }
+
+[source,ruby]
+----
+# Specify that only terms that are full matches will be flagged.
+
+# bad
+Slave
+
+# good (won't be flagged despite containing `slave`)
+TeslaVehicle
+----
+
+=== Configurable attributes
+
+|===
+| Name | Default value | Configurable values
+
+| CheckIdentifiers
+| `true`
+| Boolean
+
+| CheckConstants
+| `true`
+| Boolean
+
+| CheckVariables
+| `true`
+| Boolean
+
+| CheckStrings
+| `false`
+| Boolean
+
+| CheckSymbols
+| `true`
+| Boolean
+
+| CheckComments
+| `true`
+| Boolean
+
+| CheckFilepaths
+| `true`
+| Boolean
+
+| FlaggedTerms
+| `{"whitelist"=>{"Regex"=>/white[-_\s]?list/, "Suggestions"=>["allowlist", "permit"]}, "blacklist"=>{"Regex"=>/black[-_\s]?list/, "Suggestions"=>["denylist", "block"]}, "slave"=>{"WholeWord"=>true, "Suggestions"=>["replica", "secondary", "follower"]}}`
+| 
+|===
+
 == Naming/MemoizedInstanceVariableName
 
 |===
 | Enabled by default | Safe | Supports autocorrection | VersionAdded | VersionChanged
 
 | Enabled
-| Yes
+| No
 | No
 | 0.53
 | 1.2
@@ -531,6 +667,10 @@ directive. It can be configured to allow for memoized instance variables
 prefixed with an underscore. Prefixing ivars with an underscore is a
 convention that is used to implicitly indicate that an ivar should not
 be set or referenced outside of the memoization method.
+
+This cop relies on the pattern `@instance_var ||= ...`,
+but this is sometimes used for other purposes than memoization
+so this cop is considered unsafe.
 
 === Examples
 
@@ -915,6 +1055,11 @@ expected.
 
 The `PreferredName` config option takes a `String`. It represents
 the required name of the variable. Its default is `e`.
+
+NOTE: This cop does not consider nested rescues because it cannot
+guarantee that the variable from the outer rescue is not used within
+the inner rescue (in which case, changing the inner variable would
+shadow the outer variable).
 
 === Examples
 

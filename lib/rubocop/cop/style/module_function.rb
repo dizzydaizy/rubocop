@@ -6,7 +6,14 @@ module RuboCop
       # This cop checks for use of `extend self` or `module_function` in a
       # module.
       #
-      # Supported styles are: module_function, extend_self, forbidden.
+      # Supported styles are: module_function, extend_self, forbidden. `forbidden`
+      # style prohibits the usage of both styles.
+      #
+      # NOTE: the cop won't be activated when the module contains any private methods.
+      #
+      # @safety
+      #   Autocorrection is unsafe (and is disabled by default) because `extend self`
+      #   and `module_function` do not behave exactly the same.
       #
       # @example EnforcedStyle: module_function (default)
       #   # bad
@@ -20,9 +27,6 @@ module RuboCop
       #     module_function
       #     # ...
       #   end
-      #
-      # In case there are private methods, the cop won't be activated.
-      # Otherwise, it forces to change the flow of the default code.
       #
       # @example EnforcedStyle: module_function (default)
       #   # good
@@ -46,8 +50,6 @@ module RuboCop
       #     # ...
       #   end
       #
-      # The option `forbidden` prohibits the usage of both styles.
-      #
       # @example EnforcedStyle: forbidden
       #   # bad
       #   module Test
@@ -68,19 +70,13 @@ module RuboCop
       #     private
       #     # ...
       #   end
-      #
-      # These offenses are not safe to auto-correct since there are different
-      # implications to each approach.
       class ModuleFunction < Base
         include ConfigurableEnforcedStyle
         extend AutoCorrector
 
-        MODULE_FUNCTION_MSG =
-          'Use `module_function` instead of `extend self`.'
-        EXTEND_SELF_MSG =
-          'Use `extend self` instead of `module_function`.'
-        FORBIDDEN_MSG =
-          'Do not use `module_function` or `extend self`.'
+        MODULE_FUNCTION_MSG = 'Use `module_function` instead of `extend self`.'
+        EXTEND_SELF_MSG = 'Use `extend self` instead of `module_function`.'
+        FORBIDDEN_MSG = 'Do not use `module_function` or `extend self`.'
 
         # @!method module_function_node?(node)
         def_node_matcher :module_function_node?, '(send nil? :module_function)'

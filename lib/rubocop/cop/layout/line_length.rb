@@ -122,8 +122,7 @@ module RuboCop
           range = breakable_block_range(block_node)
           pos = range.begin_pos + 1
 
-          breakable_range_by_line_index[line_index] =
-            range_between(pos, pos + 1)
+          breakable_range_by_line_index[line_index] = range_between(pos, pos + 1)
         end
 
         def breakable_block_range(block_node)
@@ -171,25 +170,21 @@ module RuboCop
           end
           return check_uri_line(line, line_index) if allow_uri?
 
-          register_offense(
-            excess_range(nil, line, line_index),
-            line,
-            line_index
-          )
+          register_offense(excess_range(nil, line, line_index), line, line_index)
         end
 
         def ignored_line?(line, line_index)
           matches_ignored_pattern?(line) ||
             shebang?(line, line_index) ||
-            heredocs && line_in_permitted_heredoc?(line_index.succ)
+            (heredocs && line_in_permitted_heredoc?(line_index.succ))
         end
 
         def shebang?(line, line_index)
           line_index.zero? && line.start_with?('#!')
         end
 
-        def register_offense(loc, line, line_index)
-          message = format(MSG, length: line_length(line), max: max)
+        def register_offense(loc, line, line_index, length: line_length(line))
+          message = format(MSG, length: length, max: max)
 
           self.breakable_range = breakable_range_by_line_index[line_index]
 
@@ -242,15 +237,14 @@ module RuboCop
         end
 
         def line_in_heredoc?(line_number)
-          heredocs.any? do |range, _delimiter|
-            range.cover?(line_number)
-          end
+          heredocs.any? { |range, _delimiter| range.cover?(line_number) }
         end
 
         def check_directive_line(line, line_index)
-          return if line_length_without_directive(line) <= max
+          length_without_directive = line_length_without_directive(line)
+          return if length_without_directive <= max
 
-          range = max..(line_length_without_directive(line) - 1)
+          range = max..(length_without_directive - 1)
           register_offense(
             source_range(
               processed_source.buffer,
@@ -258,7 +252,8 @@ module RuboCop
               range
             ),
             line,
-            line_index
+            line_index,
+            length: length_without_directive
           )
         end
 
@@ -266,11 +261,7 @@ module RuboCop
           uri_range = find_excessive_uri_range(line)
           return if uri_range && allowed_uri_position?(line, uri_range)
 
-          register_offense(
-            excess_range(uri_range, line, line_index),
-            line,
-            line_index
-          )
+          register_offense(excess_range(uri_range, line, line_index), line, line_index)
         end
       end
     end

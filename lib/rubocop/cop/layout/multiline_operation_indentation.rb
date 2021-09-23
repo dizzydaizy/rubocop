@@ -59,9 +59,9 @@ module RuboCop
           return unless style == :aligned && cop_config['IndentationWidth']
 
           raise ValidationError, 'The `Layout/MultilineOperationIndentation`' \
-                                ' cop only accepts an `IndentationWidth` ' \
-                                'configuration parameter when ' \
-                                '`EnforcedStyle` is `indented`.'
+                                 ' cop only accepts an `IndentationWidth` ' \
+                                 'configuration parameter when ' \
+                                 '`EnforcedStyle` is `indented`.'
         end
 
         private
@@ -117,6 +117,10 @@ module RuboCop
             "Use #{correct_indentation(node)} (not #{used_indentation}) " \
               "spaces for indenting #{what} spanning multiple lines."
           end
+        end
+
+        def right_hand_side(send_node)
+          send_node.first_argument.source_range
         end
       end
     end

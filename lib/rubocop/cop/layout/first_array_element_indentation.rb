@@ -120,8 +120,7 @@ module RuboCop
             check_first(first_elem, left_bracket, left_parenthesis, 0)
           end
 
-          check_right_bracket(array_node.loc.end, left_bracket,
-                              left_parenthesis)
+          check_right_bracket(array_node.loc.end, left_bracket, left_parenthesis)
         end
 
         def check_right_bracket(right_bracket, left_bracket, left_parenthesis)
@@ -162,10 +161,10 @@ module RuboCop
             'Indent the right bracket the same as the left bracket.'
           elsif style == :special_inside_parentheses && left_parenthesis
             'Indent the right bracket the same as the first position ' \
-            'after the preceding left parenthesis.'
+              'after the preceding left parenthesis.'
           else
             'Indent the right bracket the same as the start of the line' \
-            ' where the left bracket is.'
+              ' where the left bracket is.'
           end
         end
       end

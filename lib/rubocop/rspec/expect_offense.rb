@@ -118,8 +118,7 @@ module RuboCop
 
         @processed_source = parse_processed_source(source, file)
         @offenses = _investigate(cop, @processed_source)
-        actual_annotations =
-          expected_annotations.with_offense_annotations(@offenses)
+        actual_annotations = expected_annotations.with_offense_annotations(@offenses)
 
         expect(actual_annotations).to eq(expected_annotations), ''
         expect(@offenses.map(&:severity).uniq).to eq([severity]) if severity
@@ -127,7 +126,7 @@ module RuboCop
         @offenses
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity
       def expect_correction(correction, loop: true, source: nil)
         if source
           expected_annotations = parse_annotations(source, raise_error: false)
@@ -136,6 +135,8 @@ module RuboCop
         end
 
         raise '`expect_correction` must follow `expect_offense`' unless @processed_source
+
+        source = @processed_source.raw_source
 
         iteration = 0
         new_source = loop do
@@ -152,14 +153,15 @@ module RuboCop
           end
 
           # Prepare for next loop
-          @processed_source = parse_source(corrected_source,
-                                           @processed_source.path)
+          @processed_source = parse_source(corrected_source, @processed_source.path)
           _investigate(cop, @processed_source)
         end
 
+        raise 'Use `expect_no_corrections` if the code will not change' if new_source == source
+
         expect(new_source).to eq(correction)
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity
 
       def expect_no_corrections
         raise '`expect_no_corrections` must follow `expect_offense`' unless @processed_source
@@ -178,8 +180,7 @@ module RuboCop
         offenses = inspect_source(source, file)
 
         expected_annotations = AnnotatedSource.parse(source)
-        actual_annotations =
-          expected_annotations.with_offense_annotations(offenses)
+        actual_annotations = expected_annotations.with_offense_annotations(offenses)
         expect(actual_annotations.to_s).to eq(source)
       end
 
@@ -198,7 +199,7 @@ module RuboCop
         return processed_source if processed_source.valid_syntax?
 
         raise 'Error parsing example code: ' \
-          "#{processed_source.diagnostics.map(&:render).join("\n")}"
+              "#{processed_source.diagnostics.map(&:render).join("\n")}"
       end
 
       def set_formatter_options
@@ -246,9 +247,7 @@ module RuboCop
         end
 
         def ==(other)
-          other.is_a?(self.class) &&
-            other.lines == lines &&
-            match_annotations?(other)
+          other.is_a?(self.class) && other.lines == lines && match_annotations?(other)
         end
 
         # Dirty hack: expectations with [...] are rewritten when they match

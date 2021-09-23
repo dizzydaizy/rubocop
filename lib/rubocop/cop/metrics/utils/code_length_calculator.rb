@@ -50,7 +50,7 @@ module RuboCop
                 ->(node) { heredoc_node?(node) }
               else
                 raise ArgumentError, "Unknown foldable type: #{type.inspect}. "\
-                  "Valid foldable types are: #{FOLDABLE_TYPES.join(', ')}."
+                                     "Valid foldable types are: #{FOLDABLE_TYPES.join(', ')}."
               end
             end
           end
@@ -147,7 +147,7 @@ module RuboCop
 
           # Returns true for lines that shall not be included in the count.
           def irrelevant_line?(source_line)
-            source_line.blank? || !count_comments? && comment_line?(source_line)
+            source_line.blank? || (!count_comments? && comment_line?(source_line))
           end
 
           def count_comments?

@@ -16,6 +16,11 @@ module RuboCop
       # populated with objects which can be compared with integers, but are
       # not themselves `Integer` polymorphic.
       #
+      # @safety
+      #   This cop is unsafe because it cannot be guaranteed that the receiver
+      #   defines the predicates or can be compared to a number, which may lead
+      #   to a false positive for non-standard classes.
+      #
       # @example EnforcedStyle: predicate (default)
       #   # bad
       #
@@ -48,11 +53,7 @@ module RuboCop
 
         MSG = 'Use `%<prefer>s` instead of `%<current>s`.'
 
-        REPLACEMENTS = {
-          'zero?' => '==',
-          'positive?' => '>',
-          'negative?' => '<'
-        }.freeze
+        REPLACEMENTS = { 'zero?' => '==', 'positive?' => '>', 'negative?' => '<' }.freeze
 
         RESTRICT_ON_SEND = %i[== > < positive? negative? zero?].freeze
 
@@ -88,8 +89,7 @@ module RuboCop
 
         def replacement(numeric, operation)
           if style == :predicate
-            [parenthesized_source(numeric),
-             REPLACEMENTS.invert[operation.to_s]].join('.')
+            [parenthesized_source(numeric), REPLACEMENTS.invert[operation.to_s]].join('.')
           else
             [numeric.source, REPLACEMENTS[operation.to_s], 0].join(' ')
           end

@@ -6,11 +6,13 @@ module RuboCop
       # This cop checks for places where custom logic on rejection nils from arrays
       # and hashes can be replaced with `{Array,Hash}#{compact,compact!}`.
       #
-      # It is marked as unsafe by default because false positives may occur in the
-      # nil check of block arguments to the receiver object.
-      # For example, `[[1, 2], [3, nil]].reject { |first, second| second.nil? }`
-      # and `[[1, 2], [3, nil]].compact` are not compatible. This will work fine
-      # when the receiver is a hash object.
+      # @safety
+      #   It is unsafe by default because false positives may occur in the
+      #   `nil` check of block arguments to the receiver object.
+      #
+      #   For example, `[[1, 2], [3, nil]].reject { |first, second| second.nil? }`
+      #   and `[[1, 2], [3, nil]].compact` are not compatible. This will work fine
+      #   when the receiver is a hash object.
       #
       # @example
       #   # bad
@@ -69,9 +71,7 @@ module RuboCop
           good = good_method_name(method_name)
           message = format(MSG, good: good, bad: range.source)
 
-          add_offense(range, message: message) do |corrector|
-            corrector.replace(range, good)
-          end
+          add_offense(range, message: message) { |corrector| corrector.replace(range, good) }
         end
 
         private

@@ -43,7 +43,7 @@ module RuboCop
       #   RUBY
       #
       # This cop works only when a string literal is given as a code string.
-      # No offence is reported if a string variable is given as below:
+      # No offense is reported if a string variable is given as below:
       #
       # @example
       #   # not checked
@@ -112,13 +112,11 @@ module RuboCop
         end
 
         def special_file_keyword?(node)
-          node.str_type? &&
-            node.source == '__FILE__'
+          node.str_type? && node.source == '__FILE__'
         end
 
         def special_line_keyword?(node)
-          node.int_type? &&
-            node.source == '__LINE__'
+          node.int_type? && node.source == '__LINE__'
         end
 
         def file_and_line(node)
@@ -224,7 +222,7 @@ module RuboCop
 
           register_offense(node) do |corrector|
             line_str = missing_line(node, code)
-            corrector.insert_after(node.loc.expression.end, ", __FILE__, #{line_str}")
+            corrector.insert_after(node.last_argument.source_range.end, ", __FILE__, #{line_str}")
           end
         end
 

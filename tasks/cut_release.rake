@@ -9,8 +9,7 @@ namespace :cut_release do
   end
 
   %w[major minor patch pre].each do |release_type|
-    desc "Cut a new #{release_type} release, create release notes " \
-         'and update documents.'
+    desc "Cut a new #{release_type} release, create release notes and update documents."
     task release_type => 'changelog:check_clean' do
       run(release_type)
     end
@@ -75,7 +74,7 @@ namespace :cut_release do
   def add_header_to_changelog(version)
     update_file('CHANGELOG.md') do |changelog|
       changelog.sub("## master (unreleased)\n\n", '\0' \
-        "## #{version} (#{Time.now.strftime('%F')})\n\n")
+                                                  "## #{version} (#{Time.now.strftime('%F')})\n\n")
     end
   end
 
@@ -99,8 +98,7 @@ namespace :cut_release do
 
   def user_links(text)
     names = text.scan(/\[@(\S+)\]\[\]/).map(&:first).uniq
-    names.map { |name| "[@#{name}]: https://github.com/#{name}" }
-         .join("\n")
+    names.map { |name| "[@#{name}]: https://github.com/#{name}" }.join("\n")
   end
 
   def run(release_type)

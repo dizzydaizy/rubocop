@@ -165,17 +165,24 @@ module RuboCop
         end
 
         def alignment_node_for_variable_style(node)
-          return node.parent if node.case_type? && node.argument?
+          return node.parent if node.case_type? && node.argument? &&
+                                node.loc.line == node.parent.loc.line
 
-          assignment = node.ancestors.find(&:assignment_or_similar?)
-          if assignment && !line_break_before_keyword?(assignment.source_range,
-                                                       node)
+          assignment = assignment_or_operator_method(node)
+
+          if assignment && !line_break_before_keyword?(assignment.source_range, node)
             assignment
           else
             # Fall back to 'keyword' style if this node is not on the RHS of an
             # assignment, or if it is but there's a line break between LHS and
             # RHS.
             node
+          end
+        end
+
+        def assignment_or_operator_method(node)
+          node.ancestors.find do |ancestor|
+            ancestor.assignment_or_similar? || (ancestor.send_type? && ancestor.operator_method?)
           end
         end
       end

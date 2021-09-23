@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe RuboCop::Cop::Style::DoubleNegation, :config do
-  let(:cop_config) do
-    { 'EnforcedStyle' => enforced_style }
-  end
+  let(:cop_config) { { 'EnforcedStyle' => enforced_style } }
 
   shared_examples 'common' do
     it 'registers an offense and corrects for `!!` when not a return location' do
@@ -68,6 +66,56 @@ RSpec.describe RuboCop::Cop::Style::DoubleNegation, :config do
         end
       RUBY
     end
+
+    it 'does not register an offense for `!!` when return location and using `rescue`' do
+      expect_no_offenses(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+        rescue
+          qux
+        end
+      RUBY
+    end
+
+    it 'does not register an offense for `!!` when return location and using `ensure`' do
+      expect_no_offenses(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+        ensure
+          qux
+        end
+      RUBY
+    end
+
+    it 'does not register an offense for `!!` when return location and using `rescue` and `ensure`' do
+      expect_no_offenses(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+        rescue
+          qux
+        ensure
+          corge
+        end
+      RUBY
+    end
+
+    it 'does not register an offense for `!!` when return location and using `rescue`, `else`, and `ensure`' do
+      expect_no_offenses(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+        rescue
+          qux
+        else
+          quux
+        ensure
+          corge
+        end
+      RUBY
+    end
   end
 
   context 'when `EnforcedStyle: forbidden`' do
@@ -108,6 +156,102 @@ RSpec.describe RuboCop::Cop::Style::DoubleNegation, :config do
           return !bar.do_something.nil? if condition
           baz
           !bar.nil?
+        end
+      RUBY
+    end
+
+    it 'registers an offense for `!!` when return location and using `rescue`' do
+      expect_offense(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+          ^ Avoid the use of double negation (`!!`).
+        rescue
+          qux
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        def foo?
+          bar
+          !baz.do_something.nil?
+        rescue
+          qux
+        end
+      RUBY
+    end
+
+    it 'registers an offense for `!!` when return location and using `ensure`' do
+      expect_offense(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+          ^ Avoid the use of double negation (`!!`).
+        ensure
+          qux
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        def foo?
+          bar
+          !baz.do_something.nil?
+        ensure
+          qux
+        end
+      RUBY
+    end
+
+    it 'registers an offense for `!!` when return location and using `rescue` and `ensure`' do
+      expect_offense(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+          ^ Avoid the use of double negation (`!!`).
+        rescue
+          baz
+        ensure
+          qux
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        def foo?
+          bar
+          !baz.do_something.nil?
+        rescue
+          baz
+        ensure
+          qux
+        end
+      RUBY
+    end
+
+    it 'registers an offense for `!!` when return location and using `rescue`, `else`, and `ensure`' do
+      expect_offense(<<~RUBY)
+        def foo?
+          bar
+          !!baz.do_something
+          ^ Avoid the use of double negation (`!!`).
+        rescue
+          qux
+        else
+          quux
+        ensure
+          corge
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        def foo?
+          bar
+          !baz.do_something.nil?
+        rescue
+          qux
+        else
+          quux
+        ensure
+          corge
         end
       RUBY
     end

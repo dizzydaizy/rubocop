@@ -29,6 +29,7 @@ module RuboCop
       class StringLiterals < Base
         include ConfigurableEnforcedStyle
         include StringLiteralsHelp
+        include StringHelp
         extend AutoCorrector
 
         MSG_INCONSISTENT = 'Inconsistent quote style.'
@@ -86,10 +87,10 @@ module RuboCop
         def message(_node)
           if style == :single_quotes
             "Prefer single-quoted strings when you don't need string " \
-            'interpolation or special symbols.'
+              'interpolation or special symbols.'
           else
             'Prefer double-quoted strings unless you need single quotes to ' \
-            'avoid extra backslashes for escaping.'
+              'avoid extra backslashes for escaping.'
           end
         end
 
@@ -110,8 +111,7 @@ module RuboCop
           if unexpected_single_quotes?(quote)
             all_children_with_quotes = children.all? { |c| wrong_quotes?(c) }
             register_offense(node) if all_children_with_quotes
-          elsif unexpected_double_quotes?(quote) &&
-                !accept_child_double_quotes?(children)
+          elsif unexpected_double_quotes?(quote) && !accept_child_double_quotes?(children)
             register_offense(node)
           end
         end
@@ -125,9 +125,7 @@ module RuboCop
         end
 
         def accept_child_double_quotes?(nodes)
-          nodes.any? do |n|
-            n.dstr_type? || double_quotes_required?(n.source)
-          end
+          nodes.any? { |n| n.dstr_type? || double_quotes_required?(n.source) }
         end
       end
     end

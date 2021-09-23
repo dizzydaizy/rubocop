@@ -14,6 +14,11 @@ module RuboCop
       # convention that is used to implicitly indicate that an ivar should not
       # be set or referenced outside of the memoization method.
       #
+      # @safety
+      #   This cop relies on the pattern `@instance_var ||= ...`,
+      #   but this is sometimes used for other purposes than memoization
+      #   so this cop is considered unsafe.
+      #
       # @example EnforcedStyleForLeadingUnderscores: disallowed (default)
       #   # bad
       #   # Method foo is memoized using an instance variable that is
@@ -143,9 +148,9 @@ module RuboCop
         include ConfigurableEnforcedStyle
 
         MSG = 'Memoized variable `%<var>s` does not match ' \
-          'method name `%<method>s`. Use `@%<suggested_var>s` instead.'
+              'method name `%<method>s`. Use `@%<suggested_var>s` instead.'
         UNDERSCORE_REQUIRED = 'Memoized variable `%<var>s` does not start ' \
-          'with `_`. Use `@%<suggested_var>s` instead.'
+                              'with `_`. Use `@%<suggested_var>s` instead.'
         DYNAMIC_DEFINE_METHODS = %i[define_method define_singleton_method].to_set.freeze
 
         # @!method method_definition?(node)
@@ -243,8 +248,7 @@ module RuboCop
         def message(variable)
           variable_name = variable.to_s.sub('@', '')
 
-          return UNDERSCORE_REQUIRED if style == :required &&
-                                        !variable_name.start_with?('_')
+          return UNDERSCORE_REQUIRED if style == :required && !variable_name.start_with?('_')
 
           MSG
         end
@@ -256,7 +260,7 @@ module RuboCop
         end
 
         def variable_name_candidates(method_name)
-          no_underscore = method_name.sub(/\A_/, '')
+          no_underscore = method_name.delete_prefix('_')
           with_underscore = "_#{method_name}"
           case style
           when :required

@@ -81,8 +81,7 @@ RSpec.describe RuboCop::Cop::Style::EvalWithLocation, :config do
     RUBY
   end
 
-  it 'registers an offense when using `#eval` with a heredoc and ' \
-     'an incorrect line number' do
+  it 'registers an offense when using `#eval` with a heredoc and an incorrect line number' do
     expect_offense(<<~RUBY)
       eval <<-CODE, binding, __FILE__, __LINE__ + 2
                                        ^^^^^^^^^^^^ Incorrect line number for `eval`; use `__LINE__ + 1` instead of `__LINE__ + 2`.
@@ -97,7 +96,7 @@ RSpec.describe RuboCop::Cop::Style::EvalWithLocation, :config do
     RUBY
   end
 
-  it 'registers an offense when using `#eval` with a string on a new line ' do
+  it 'registers an offense when using `#eval` with a string on a new line' do
     expect_offense(<<~RUBY)
       eval('puts 42',
            binding,
@@ -156,6 +155,17 @@ RSpec.describe RuboCop::Cop::Style::EvalWithLocation, :config do
       foo.instance_eval <<-CODE, __FILE__, __LINE__ + 1
         do_something
       CODE
+    RUBY
+  end
+
+  it 'registers an offense when using `#instance_eval` with a string argument in parentheses' do
+    expect_offense(<<~RUBY)
+      instance_eval('@foo = foo')
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Pass `__FILE__` and `__LINE__` to `instance_eval`.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      instance_eval('@foo = foo', __FILE__, __LINE__)
     RUBY
   end
 

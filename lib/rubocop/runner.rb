@@ -112,9 +112,7 @@ module RuboCop
     end
 
     def list_files(paths)
-      paths.each do |path|
-        puts PathUtil.relative_path(path)
-      end
+      paths.each { |path| puts PathUtil.relative_path(path) }
     end
 
     def process_file(file)
@@ -193,11 +191,10 @@ module RuboCop
 
     def redundant_cop_disable_directive(file)
       config = @config_store.for_file(file)
-      if config.for_cop(Cop::Lint::RedundantCopDisableDirective)
-               .fetch('Enabled')
-        cop = Cop::Lint::RedundantCopDisableDirective.new(config, @options)
-        yield cop if cop.relevant_file?(file)
-      end
+      return unless config.for_cop(Cop::Lint::RedundantCopDisableDirective).fetch('Enabled')
+
+      cop = Cop::Lint::RedundantCopDisableDirective.new(config, @options)
+      yield cop if cop.relevant_file?(file)
     end
 
     def filtered_run?
@@ -206,9 +203,7 @@ module RuboCop
 
     def file_started(file)
       puts "Scanning #{file}" if @options[:debug]
-      formatter_set.file_started(file,
-                                 cli_options: @options,
-                                 config_store: @config_store)
+      formatter_set.file_started(file, cli_options: @options, config_store: @config_store)
     end
 
     def file_finished(file, offenses)
@@ -221,8 +216,7 @@ module RuboCop
     def cached_run?
       @cached_run ||=
         (@options[:cache] == 'true' ||
-         @options[:cache] != 'false' &&
-         @config_store.for_pwd.for_all_cops['UseCache']) &&
+         (@options[:cache] != 'false' && @config_store.for_pwd.for_all_cops['UseCache'])) &&
         # When running --auto-gen-config, there's some processing done in the
         # cops related to calculating the Max parameters for Metrics cops. We
         # need to do that processing and cannot use caching.
@@ -372,9 +366,7 @@ module RuboCop
       @formatter_set ||= begin
         set = Formatter::FormatterSet.new(@options)
         pairs = @options[:formatters] || [['progress']]
-        pairs.each do |formatter_key, output_path|
-          set.add_formatter(formatter_key, output_path)
-        end
+        pairs.each { |formatter_key, output_path| set.add_formatter(formatter_key, output_path) }
         set
       end
     end

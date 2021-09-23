@@ -14,7 +14,11 @@ module RuboCop
       # `Dir.glob` and `Dir[]` sort globbed results by default in Ruby 3.0.
       # So all bad cases are acceptable when Ruby 3.0 or higher are used.
       #
-      # This cop will be deprecated and removed when supporting only Ruby 3.0 and higher.
+      # NOTE: This cop will be deprecated and removed when supporting only Ruby 3.0 and higher.
+      #
+      # @safety
+      #   This cop is unsafe in the case where sorting files changes existing
+      #   expected behaviour.
       #
       # @example
       #
@@ -66,9 +70,7 @@ module RuboCop
           loop_variable(node.arguments) do |var_name|
             return unless var_is_required?(node.body, var_name)
 
-            add_offense(node.send_node) do |corrector|
-              correct_block(corrector, node.send_node)
-            end
+            add_offense(node.send_node) { |corrector| correct_block(corrector, node.send_node) }
           end
         end
 

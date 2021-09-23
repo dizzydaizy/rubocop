@@ -6,9 +6,10 @@ module RuboCop
       # This cop checks for places where redundant assignments are made for in place
       # modification methods.
       #
-      # This cop is marked as unsafe, because it can produce false positives for
-      # user defined methods having one of the expected names, but not modifying
-      # its receiver in place.
+      # @safety
+      #   This cop is unsafe, because it can produce false positives for
+      #   user defined methods having one of the expected names, but not modifying
+      #   its receiver in place.
       #
       # @example
       #   # bad
@@ -66,8 +67,8 @@ module RuboCop
         alias on_gvasgn on_lvasgn
 
         def on_send(node)
-          # TODO: replace with #end_with? after supporting only ruby >= 2.7
-          return unless node.method_name.match?(/=$/)
+          # TODO: Remove `Symbol#to_s` after supporting only Ruby >= 2.7.
+          return unless node.method_name.to_s.end_with?('=')
           return unless redundant_assignment?(node)
 
           message = format(MSG, method_name: node.first_argument.method_name)

@@ -168,4 +168,105 @@ RSpec.describe RuboCop::Cop::Lint::SymbolConversion, :config do
       RUBY
     end
   end
+
+  context 'EnforcedStyle: consistent' do
+    let(:cop_config) { { 'EnforcedStyle' => 'consistent' } }
+
+    context 'hash where no keys need to be quoted' do
+      it 'does not register an offense' do
+        expect_no_offenses(<<~RUBY)
+          {
+            a: 1,
+            b: 2
+          }
+        RUBY
+      end
+    end
+
+    context 'hash where keys are quoted but do not need to be' do
+      it 'registers an offense' do
+        expect_offense(<<~RUBY)
+          {
+            a: 1,
+            'b': 2
+            ^^^ Unnecessary symbol conversion; use `b:` instead.
+          }
+        RUBY
+
+        expect_correction(<<~RUBY)
+          {
+            a: 1,
+            b: 2
+          }
+        RUBY
+      end
+    end
+
+    context 'hash where there are keys needing quoting' do
+      it 'registers an offense for unquoted keys' do
+        expect_offense(<<~RUBY)
+          {
+            a: 1,
+            ^ Symbol hash key should be quoted for consistency; use `"a":` instead.
+            b: 2,
+            ^ Symbol hash key should be quoted for consistency; use `"b":` instead.
+            'c': 3,
+            'd-e': 4
+          }
+        RUBY
+
+        expect_correction(<<~RUBY)
+          {
+            "a": 1,
+            "b": 2,
+            'c': 3,
+            'd-e': 4
+          }
+        RUBY
+      end
+    end
+
+    context 'with a key with =' do
+      it 'requires symbols to be quoted' do
+        expect_offense(<<~RUBY)
+          {
+            'a=': 1,
+            b: 2
+            ^ Symbol hash key should be quoted for consistency; use `"b":` instead.
+          }
+        RUBY
+
+        expect_correction(<<~RUBY)
+          {
+            'a=': 1,
+            "b": 2
+          }
+        RUBY
+      end
+    end
+
+    context 'with different quote styles' do
+      it 'does not register an offense' do
+        expect_no_offenses(<<~RUBY)
+          {
+            'a': 1,
+            "b": 2,
+            "c-d": 3,
+            'e-f': 4
+          }
+        RUBY
+      end
+    end
+
+    context 'with a mix of string and symbol keys' do
+      it 'does not register an offense' do
+        expect_no_offenses(<<~RUBY)
+          {
+            'a' => 1,
+            'b-c': 2
+          }
+        RUBY
+      end
+    end
+  end
 end

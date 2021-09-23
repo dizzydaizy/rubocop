@@ -48,6 +48,15 @@ RSpec.describe RuboCop::Cop::Layout::ClosingParenthesisIndentation, :config do
         RUBY
       end
 
+      it 'does not register an offense when using keyword arguments' do
+        expect_no_offenses(<<~RUBY)
+          some_method(x: 1,
+            y: 2,
+            z: 3
+          )
+        RUBY
+      end
+
       it 'accepts a correctly indented )' do
         expect_no_offenses(<<~RUBY)
           some_method(a,
@@ -74,8 +83,7 @@ RSpec.describe RuboCop::Cop::Layout::ClosingParenthesisIndentation, :config do
         RUBY
       end
 
-      it 'registers an offense and corrects misindented ) ' \
-        'when ) is aligned with the params' do
+      it 'registers an offense and corrects misindented ) when ) is aligned with the params' do
         expect_offense(<<~RUBY)
           some_method(a,
             x: 1,

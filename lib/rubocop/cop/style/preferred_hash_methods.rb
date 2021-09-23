@@ -3,10 +3,15 @@
 module RuboCop
   module Cop
     module Style
-      # This cop (by default) checks for uses of methods Hash#has_key? and
-      # Hash#has_value? where it enforces Hash#key? and Hash#value?
-      # It is configurable to enforce the inverse, using `verbose` method
-      # names also.
+      # This cop checks for uses of methods `Hash#has_key?` and
+      # `Hash#has_value?`, and suggests using `Hash#key?` and `Hash#value?` instead.
+      #
+      # It is configurable to enforce the verbose method names, by using the
+      # `EnforcedStyle: verbose` configuration.
+      #
+      # @safety
+      #   This cop is unsafe because it cannot be guaranteed that the receiver
+      #   is a `Hash` or responds to the replacement methods.
       #
       # @example EnforcedStyle: short (default)
       #  # bad
@@ -31,10 +36,7 @@ module RuboCop
 
         MSG = 'Use `Hash#%<prefer>s` instead of `Hash#%<current>s`.'
 
-        OFFENDING_SELECTORS = {
-          short: %i[has_key? has_value?],
-          verbose: %i[key? value?]
-        }.freeze
+        OFFENDING_SELECTORS = { short: %i[has_key? has_value?], verbose: %i[key? value?] }.freeze
 
         RESTRICT_ON_SEND = OFFENDING_SELECTORS.values.flatten.freeze
 

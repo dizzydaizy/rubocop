@@ -5,9 +5,10 @@ module RuboCop
     module Lint
       # This cop checks for uses of `begin...end while/until something`.
       #
-      # The cop is marked as unsafe because behaviour can change in some cases, including
-      # if a local variable inside the loop body is accessed outside of it, or if the
-      # loop body raises a `StopIteration` exception (which `Kernel#loop` rescues).
+      # @safety
+      #   The cop is unsafe because behaviour can change in some cases, including
+      #   if a local variable inside the loop body is accessed outside of it, or if the
+      #   loop body raises a `StopIteration` exception (which `Kernel#loop` rescues).
       #
       # @example
       #
@@ -49,8 +50,7 @@ module RuboCop
       class Loop < Base
         extend AutoCorrector
 
-        MSG = 'Use `Kernel#loop` with `break` rather than ' \
-              '`begin/end/until`(or `while`).'
+        MSG = 'Use `Kernel#loop` with `break` rather than `begin/end/until`(or `while`).'
 
         def on_while_post(node)
           register_offense(node)

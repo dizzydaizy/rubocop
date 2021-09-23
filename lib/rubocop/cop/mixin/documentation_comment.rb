@@ -5,7 +5,6 @@ module RuboCop
     # Common functionality for checking documentation.
     module DocumentationComment
       extend NodePattern::Macros
-      include Style::AnnotationComment
 
       private
 
@@ -15,7 +14,7 @@ module RuboCop
         return false unless preceding_comment?(node, preceding_lines.last)
 
         preceding_lines.any? do |comment|
-          !annotation?(comment) &&
+          !AnnotationComment.new(comment, annotation_keywords).annotation? &&
             !interpreter_directive_comment?(comment) &&
             !rubocop_directive_comment?(comment)
         end
@@ -24,8 +23,7 @@ module RuboCop
       # The args node1 & node2 may represent a RuboCop::AST::Node
       # or a Parser::Source::Comment. Both respond to #loc.
       def preceding_comment?(node1, node2)
-        node1 && node2 && precede?(node2, node1) &&
-          comment_line?(node2.loc.expression.source)
+        node1 && node2 && precede?(node2, node1) && comment_line?(node2.loc.expression.source)
       end
 
       # The args node1 & node2 may represent a RuboCop::AST::Node
@@ -35,9 +33,7 @@ module RuboCop
       end
 
       def preceding_lines(node)
-        processed_source.ast_with_comments[node].select do |line|
-          line.loc.line < node.loc.line
-        end
+        processed_source.ast_with_comments[node].select { |line| line.loc.line < node.loc.line }
       end
 
       def interpreter_directive_comment?(comment)
@@ -46,6 +42,10 @@ module RuboCop
 
       def rubocop_directive_comment?(comment)
         !!DirectiveComment.new(comment).match_captures
+      end
+
+      def annotation_keywords
+        config.for_cop('Style/CommentAnnotation')['Keywords']
       end
     end
   end

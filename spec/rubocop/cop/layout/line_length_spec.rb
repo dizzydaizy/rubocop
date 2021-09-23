@@ -5,9 +5,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
 
   let(:config) do
     RuboCop::Config.new(
-      'Layout/LineLength' => {
-        'URISchemes' => %w[http https]
-      }.merge(cop_config),
+      'Layout/LineLength' => { 'URISchemes' => %w[http https] }.merge(cop_config),
       'Layout/IndentationStyle' => { 'IndentationWidth' => 2 }
     )
   end
@@ -113,8 +111,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
     end
 
-    context 'and the excessive characters include part of a URL ' \
-            'and another word' do
+    context 'and the excessive characters include part of a URL and another word' do
       it 'registers an offense for the line' do
         expect_offense(<<-RUBY)
           # See: https://github.com/rubocop/rubocop/commit/3b48d8bdf5b1c2e05e35061837309890f04ab08c and
@@ -134,8 +131,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
     end
 
-    context 'and the excessive characters include part of a URL ' \
-            'and trailing whitespace' do
+    context 'and the excessive characters include part of a URL and trailing whitespace' do
       it 'registers an offense for the line' do
         expect_offense(<<-RUBY)
           # See: https://github.com/rubocop/rubocop/commit/3b48d8bdf5b1c2e05e35061837309890f04ab08c#{trailing_whitespace}
@@ -147,9 +143,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
 
     context 'and an error other than URI::InvalidURIError is raised ' \
             'while validating a URI-ish string' do
-      let(:cop_config) do
-        { 'Max' => 80, 'AllowURI' => true, 'URISchemes' => %w[LDAP] }
-      end
+      let(:cop_config) { { 'Max' => 80, 'AllowURI' => true, 'URISchemes' => %w[LDAP] } }
 
       it 'does not crash' do
         expect do
@@ -204,12 +198,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
   end
 
   context 'when IgnoredPatterns option is set' do
-    let(:cop_config) do
-      {
-        'Max' => 18,
-        'IgnoredPatterns' => ['^\s*test\s', /^\s*def\s+test_/]
-      }
-    end
+    let(:cop_config) { { 'Max' => 18, 'IgnoredPatterns' => ['^\s*test\s', /^\s*def\s+test_/] } }
 
     it 'only registers an offense for lines not matching the pattern' do
       expect_offense(<<~RUBY)
@@ -237,16 +226,12 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
 
     context 'when the source has no AST' do
       it 'does not crash' do
-        expect do
-          expect_no_offenses('# this results in AST being nil')
-        end.not_to raise_error
+        expect { expect_no_offenses('# this results in AST being nil') }.not_to raise_error
       end
     end
 
     context 'and only certain heredoc delimiters are permitted' do
-      let(:cop_config) do
-        { 'Max' => 80, 'AllowHeredoc' => %w[SQL OK], 'IgnoredPatterns' => [] }
-      end
+      let(:cop_config) { { 'Max' => 80, 'AllowHeredoc' => %w[SQL OK], 'IgnoredPatterns' => [] } }
 
       it 'rejects long lines in heredocs with not permitted delimiters' do
         expect_offense(<<-RUBY)
@@ -360,7 +345,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       it 'highlights only the non-directive part' do
         expect_offense(<<~RUBY)
           #{'a' * 80}bcd # rubocop:enable Style/ClassVars
-          #{' ' * 80}^^^ Line is too long. [116/80]
+          #{' ' * 80}^^^ Line is too long. [83/80]
         RUBY
       end
 
@@ -368,7 +353,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
         it 'highlights only the non-directive part' do
           expect_offense(<<~RUBY)
             #{'a' * 70} # bbbbbbbbbbbbbb # rubocop:enable Style/ClassVars'
-            #{' ' * 70}          ^^^^^^^ Line is too long. [121/80]
+            #{' ' * 70}          ^^^^^^^ Line is too long. [87/80]
           RUBY
         end
       end
@@ -376,8 +361,8 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       context 'and the source contains non-directive #s as non-comment' do
         it 'registers an offense for the line' do
           expect_offense(<<-RUBY)
-            LARGE_DATA_STRING_PATTERN = %r{\A([A-Za-z0-9\+\/#]*\={0,2})#([A-Za-z0-9\+\/#]*\={0,2})#([A-Za-z0-9\+\/#]*\={0,2})\z} # rubocop:disable Layout/LineLength
-            #{' ' * 68}^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Line is too long. [153/80]
+            LARGE_DATA_STRING_PATTERN = %r{\A([A-Za-z0-9\+\/#]*\={0,2})#([A-Za-z0-9\+\/#]*\={0,2})#([A-Za-z0-9\+\/#]*\={0,2})\z} # rubocop:disable Style/ClassVars
+            #{' ' * 68}^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Line is too long. [117/80]
           RUBY
         end
       end
@@ -395,8 +380,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
         expect(cop.config_to_allow_offenses).to eq(exclude_limit: { 'Max' => 33 })
       end
 
-      it "accepts a line that's including 1 tab with size 2" \
-         ' and 28 other characters' do
+      it "accepts a line that's including 1 tab with size 2 and 28 other characters" do
         expect_no_offenses("\t#{'#' * 28}")
       end
     end
@@ -458,9 +442,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
   end
 
   context 'autocorrection' do
-    let(:cop_config) do
-      { 'Max' => 40, 'IgnoredPatterns' => nil, 'AutoCorrect' => true }
-    end
+    let(:cop_config) { { 'Max' => 40, 'IgnoredPatterns' => nil, 'AutoCorrect' => true } }
 
     context 'hash' do
       context 'when under limit' do
@@ -623,6 +605,34 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
         end
       end
 
+      context 'when unparenthesized' do
+        context 'when there is one argument' do
+          it 'does not autocorrect' do
+            expect_offense(<<~RUBY)
+              method_call xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                                                      ^^ Line is too long. [42/40]
+            RUBY
+
+            expect_no_corrections
+          end
+        end
+
+        context 'when there are multiple arguments' do
+          it 'splits the line after the first element' do
+            args = 'x' * 28
+            expect_offense(<<~RUBY, args: args)
+              method_call #{args}, abc
+                          _{args}^^^^^ Line is too long. [45/40]
+            RUBY
+
+            expect_correction(<<~RUBY, loop: false)
+              method_call #{args},#{trailing_whitespace}
+              abc
+            RUBY
+          end
+        end
+      end
+
       context 'when call with hash on same line' do
         it 'adds an offense only to outer and autocorrects it' do
           expect_offense(<<~RUBY)
@@ -743,6 +753,74 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
             attr_reader :first_name, :last_name,#{trailing_whitespace}
             :email, :username, :country, :state, :city, :postal_code
           RUBY
+        end
+      end
+
+      context 'with a heredoc argument' do
+        it 'does not break up the line' do
+          args = 'x' * 25
+          expect_offense(<<~RUBY, args: args)
+            foo(<<~STRING, #{args}xxx)
+                           _{args}^^^^ Line is too long. [44/40]
+            STRING
+          RUBY
+
+          expect_no_corrections
+        end
+
+        it 'does not break up the line when parentheses are omitted' do
+          args = 'x' * 25
+          expect_offense(<<~RUBY, args: args)
+            foo <<~STRING, #{args}xxx
+                           _{args}^^^ Line is too long. [43/40]
+            STRING
+          RUBY
+
+          expect_no_corrections
+        end
+
+        it 'does not break up the line when a heredoc is used as the first element of an array' do
+          expect_offense(<<~RUBY)
+            [<<~STRING, { key1: value1, key2: value2 }]
+                                                    ^^^ Line is too long. [43/40]
+            STRING
+          RUBY
+
+          expect_no_corrections
+        end
+
+        context 'and other arguments before the heredoc' do
+          it 'can break up the line before the heredoc argument' do
+            args = 'x' * 20
+            expect_offense(<<~RUBY, args: args)
+              foo(abc, <<~STRING, #{args}xxx)
+                                  _{args}^^^^ Line is too long. [44/40]
+              STRING
+            RUBY
+
+            expect_correction(<<~RUBY)
+              foo(abc,#{trailing_whitespace}
+              <<~STRING, #{args}xxx)
+              STRING
+            RUBY
+          end
+        end
+
+        context 'and the heredoc is after the line should split' do
+          it 'can break up the line before the heredoc argument' do
+            args = 'x' * 34
+            expect_offense(<<~RUBY, args: args)
+              foo(#{args}, <<~STRING)
+                  _{args}  ^^^^^^^^^^ Line is too long. [50/40]
+              STRING
+            RUBY
+
+            expect_correction(<<~RUBY)
+              foo(#{args},#{trailing_whitespace}
+              <<~STRING)
+              STRING
+            RUBY
+          end
         end
       end
     end
@@ -918,8 +996,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
 
       context 'when over limit' do
-        it 'adds offense and autocorrects it by breaking the semicolon' \
-          'before the hash' do
+        it 'adds offense and autocorrects it by breaking the semicolonbefore the hash' do
           expect_offense(<<~RUBY)
             {foo: 1, bar: "2"}; a = 400000000000 + 500000000000000
                                                     ^^^^^^^^^^^^^^ Line is too long. [54/40]
@@ -933,8 +1010,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
 
       context 'when over limit and semicolon at end of line' do
-        it 'adds offense and autocorrects it by breaking the first semicolon' \
-          'before the hash' do
+        it 'adds offense and autocorrects it by breaking the first semicolonbefore the hash' do
           expect_offense(<<~RUBY)
             {foo: 1, bar: "2"}; a = 400000000000 + 500000000000000;
                                                     ^^^^^^^^^^^^^^^ Line is too long. [55/40]
@@ -948,8 +1024,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
 
       context 'when over limit and many spaces around semicolon' do
-        it 'adds offense and autocorrects it by breaking the semicolon' \
-          'before the hash' do
+        it 'adds offense and autocorrects it by breaking the semicolonbefore the hash' do
           expect_offense(<<~RUBY)
             {foo: 1, bar: "2"}  ;   a = 400000000000 + 500000000000000
                                                     ^^^^^^^^^^^^^^^^^^ Line is too long. [58/40]
@@ -963,8 +1038,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
 
       context 'when over limit and many semicolons' do
-        it 'adds offense and autocorrects it by breaking the semicolon' \
-          'before the hash' do
+        it 'adds offense and autocorrects it by breaking the semicolonbefore the hash' do
           expect_offense(<<~RUBY)
             {foo: 1, bar: "2"}  ;;; a = 400000000000 + 500000000000000
                                                     ^^^^^^^^^^^^^^^^^^ Line is too long. [58/40]
@@ -978,8 +1052,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
 
       context 'when over limit and one semicolon at the end' do
-        it 'adds offense and does not autocorrect' \
-          'before the hash' do
+        it 'adds offense and does not autocorrectbefore the hash' do
           expect_offense(<<~RUBY)
             a = 400000000000 + 500000000000000000000;
                                                     ^ Line is too long. [41/40]
@@ -990,8 +1063,7 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
       end
 
       context 'when over limit and many semicolons at the end' do
-        it 'adds offense and does not autocorrect' \
-          'before the hash' do
+        it 'adds offense and does not autocorrectbefore the hash' do
           expect_offense(<<~RUBY)
             a = 400000000000 + 500000000000000000000;;;;;;;
                                                     ^^^^^^^ Line is too long. [47/40]
@@ -1015,24 +1087,20 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
         end
       end
 
-      context 'semicolons  inside string literal' do
+      context 'semicolons inside string literal' do
         it 'adds offense and autocorrects elsewhere' do
           expect_offense(<<~RUBY)
             "00000000000000000;0000000000000000000'000000;00000'0000;0000;000"
                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^ Line is too long. [66/40]
           RUBY
 
-          expect_correction(<<~RUBY)
-            "00000000000000000;0000000000000000000'000000;00000'0000;0000;000"
-          RUBY
+          expect_no_corrections
         end
       end
     end
 
     context 'HEREDOC' do
-      let(:cop_config) do
-        { 'Max' => 40, 'AllowURI' => false, 'AllowHeredoc' => false }
-      end
+      let(:cop_config) { { 'Max' => 40, 'AllowURI' => false, 'AllowHeredoc' => false } }
 
       context 'when over limit with semicolon' do
         it 'adds offense and does not autocorrect' do
@@ -1057,6 +1125,23 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
           RUBY
 
           expect_no_corrections
+        end
+      end
+    end
+
+    context 'multiple assignment' do
+      context 'when over limit at right hand side' do
+        it 'registers and corrects an offense' do
+          expect_offense(<<~RUBY)
+            a = fooooooooooooooooooooooooooooooooooooo, b
+                                                    ^^^^^ Line is too long. [45/40]
+          RUBY
+
+          expect_correction(<<~RUBY)
+            a =#{trailing_whitespace}
+            fooooooooooooooooooooooooooooooooooooo,#{trailing_whitespace}
+            b
+          RUBY
         end
       end
     end

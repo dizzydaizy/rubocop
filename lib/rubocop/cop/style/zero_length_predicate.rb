@@ -9,6 +9,12 @@ module RuboCop
       # receiver.length < 1 and receiver.size == 0 that can be
       # replaced by receiver.empty? and !receiver.empty?.
       #
+      # @safety
+      #   This cop is unsafe because it cannot be guaranteed that the receiver
+      #   has an `empty?` method that is defined in terms of `length`. If there
+      #   is a non-standard class that redefines `length` or `empty?`, the cop
+      #   may register a false positive.
+      #
       # @example
       #   # bad
       #   [1, 2, 3].length == 0
@@ -29,8 +35,7 @@ module RuboCop
         extend AutoCorrector
 
         ZERO_MSG = 'Use `empty?` instead of `%<lhs>s %<opr>s %<rhs>s`.'
-        NONZERO_MSG = 'Use `!empty?` instead of ' \
-                      '`%<lhs>s %<opr>s %<rhs>s`.'
+        NONZERO_MSG = 'Use `!empty?` instead of `%<lhs>s %<opr>s %<rhs>s`.'
 
         RESTRICT_ON_SEND = %i[size length].freeze
 

@@ -30,8 +30,7 @@ module RuboCop
         include ConfigurableEnforcedStyle
         extend AutoCorrector
 
-        LOWER_CASE_Q_MSG = 'Do not use `%Q` unless interpolation is ' \
-                           'needed. Use `%q`.'
+        LOWER_CASE_Q_MSG = 'Do not use `%Q` unless interpolation is needed. Use `%q`.'
         UPPER_CASE_Q_MSG = 'Use `%Q` instead of `%q`.'
 
         def on_str(node)
@@ -54,8 +53,8 @@ module RuboCop
         end
 
         def correct_literal_style?(node)
-          style == :lower_case_q && type(node) == '%q' ||
-            style == :upper_case_q && type(node) == '%Q'
+          (style == :lower_case_q && type(node) == '%q') ||
+            (style == :upper_case_q && type(node) == '%Q')
         end
 
         def message(_range)

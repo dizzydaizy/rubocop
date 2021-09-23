@@ -7,8 +7,9 @@ module RuboCop
       # (when the integer <= 0) or that will only ever yield once
       # (`1.times`).
       #
-      # This cop is marked as unsafe as `times` returns its receiver, which
-      # is *usually* OK, but might change behavior.
+      # @safety
+      #   This cop is unsafe as `times` returns its receiver, which is
+      #   *usually* OK, but might change behavior.
       #
       # @example
       #   # bad
@@ -65,7 +66,7 @@ module RuboCop
         private
 
         def never_process?(count, node)
-          count < 1 || node.block_type? && node.body.nil?
+          count < 1 || (node.block_type? && node.body.nil?)
         end
 
         def remove_node(corrector, node)
@@ -81,7 +82,7 @@ module RuboCop
           return if block_reassigns_arg?(node, block_arg)
 
           source = node.body.source
-          source.gsub!(/\b#{block_arg}\b/, '1') if block_arg
+          source.gsub!(/\b#{block_arg}\b/, '0') if block_arg
 
           corrector.replace(node, fix_indentation(source, node.loc.column...node.body.loc.column))
         end

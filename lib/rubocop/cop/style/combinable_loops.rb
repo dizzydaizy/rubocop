@@ -7,8 +7,9 @@ module RuboCop
       # can be combined into a single loop. It is very likely that combining them
       # will make the code more efficient and more concise.
       #
-      # It is marked as unsafe, because the first loop might modify
-      # a state that the second loop depends on; these two aren't combinable.
+      # @safety
+      #   The cop is unsafe, because the first loop might modify state that the
+      #   second loop depends on; these two aren't combinable.
       #
       # @example
       #   # bad
@@ -75,8 +76,9 @@ module RuboCop
         private
 
         def collection_looping_method?(node)
-          method_name = node.send_node.method_name
-          method_name.match?(/^each/) || method_name.match?(/_each$/)
+          # TODO: Remove `Symbol#to_s` after supporting only Ruby >= 2.7.
+          method_name = node.send_node.method_name.to_s
+          method_name.start_with?('each') || method_name.end_with?('_each')
         end
 
         def same_collection_looping?(node, sibling)

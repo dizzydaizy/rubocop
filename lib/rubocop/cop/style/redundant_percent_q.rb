@@ -22,8 +22,7 @@ module RuboCop
 
         MSG = 'Use `%<q_type>s` only for strings that contain both ' \
               'single quotes and double quotes%<extra>s.'
-        DYNAMIC_MSG = ', or for dynamic strings that contain ' \
-                      'double quotes'
+        DYNAMIC_MSG = ', or for dynamic strings that contain double quotes'
         SINGLE_QUOTE = "'"
         QUOTE = '"'
         EMPTY = ''
@@ -66,9 +65,8 @@ module RuboCop
         end
 
         def allowed_percent_q?(node)
-          node.source.start_with?(PERCENT_Q) && acceptable_q?(node) ||
-            node.source.start_with?(PERCENT_CAPITAL_Q) &&
-              acceptable_capital_q?(node)
+          (node.source.start_with?(PERCENT_Q) && acceptable_q?(node)) ||
+            (node.source.start_with?(PERCENT_CAPITAL_Q) && acceptable_capital_q?(node))
         end
 
         def message(node)

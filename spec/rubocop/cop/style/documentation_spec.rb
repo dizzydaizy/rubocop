@@ -9,22 +9,21 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
 
   it 'registers an offense for non-empty class' do
     expect_offense(<<~RUBY)
-      class My_Class
-      ^^^^^ Missing top-level class documentation comment.
+      class MyClass
+      ^^^^^^^^^^^^^ Missing top-level documentation comment for `class MyClass`.
         def method
         end
       end
     RUBY
   end
 
-  it 'does not consider comment followed by empty line to be class ' \
-     'documentation' do
+  it 'does not consider comment followed by empty line to be class documentation' do
     expect_offense(<<~RUBY)
       # Copyright 2014
       # Some company
 
-      class My_Class
-      ^^^^^ Missing top-level class documentation comment.
+      class MyClass
+      ^^^^^^^^^^^^^ Missing top-level documentation comment for `class MyClass`.
         def method
         end
       end
@@ -33,8 +32,8 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
 
   it 'registers an offense for non-namespace' do
     expect_offense(<<~RUBY)
-      module My_Class
-      ^^^^^^ Missing top-level module documentation comment.
+      module MyModule
+      ^^^^^^^^^^^^^^^ Missing top-level documentation comment for `module MyModule`.
         def method
         end
       end
@@ -46,7 +45,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
     # explanation.
     expect_offense(<<~RUBY)
       module Test
-      ^^^^^^ Missing top-level module documentation comment.
+      ^^^^^^^^^^^ Missing top-level documentation comment for `module Test`.
       end
     RUBY
   end
@@ -54,7 +53,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'accepts non-empty class with documentation' do
     expect_no_offenses(<<~RUBY)
       # class comment
-      class My_Class
+      class MyClass
         def method
         end
       end
@@ -64,8 +63,8 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'registers an offense for non-empty class with annotation comment' do
     expect_offense(<<~RUBY)
       # OPTIMIZE: Make this faster.
-      class My_Class
-      ^^^^^ Missing top-level class documentation comment.
+      class MyClass
+      ^^^^^^^^^^^^^ Missing top-level documentation comment for `class MyClass`.
         def method
         end
       end
@@ -75,8 +74,8 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'registers an offense for non-empty class with directive comment' do
     expect_offense(<<~RUBY)
       # rubocop:disable Style/For
-      class My_Class
-      ^^^^^ Missing top-level class documentation comment.
+      class MyClass
+      ^^^^^^^^^^^^^ Missing top-level documentation comment for `class MyClass`.
         def method
         end
       end
@@ -86,8 +85,8 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'registers offense for non-empty class with frozen string comment' do
     expect_offense(<<~RUBY)
       # frozen_string_literal: true
-      class My_Class
-      ^^^^^ Missing top-level class documentation comment.
+      class MyClass
+      ^^^^^^^^^^^^^ Missing top-level documentation comment for `class MyClass`.
         def method
         end
       end
@@ -97,20 +96,19 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'registers an offense for non-empty class with encoding comment' do
     expect_offense(<<~RUBY)
       # encoding: ascii-8bit
-      class My_Class
-      ^^^^^ Missing top-level class documentation comment.
+      class MyClass
+      ^^^^^^^^^^^^^ Missing top-level documentation comment for `class MyClass`.
         def method
         end
       end
     RUBY
   end
 
-  it 'accepts non-empty class with annotation comment followed by other ' \
-     'comment' do
+  it 'accepts non-empty class with annotation comment followed by other comment' do
     expect_no_offenses(<<~RUBY)
       # OPTIMIZE: Make this faster.
       # Class comment.
-      class My_Class
+      class MyClass
         def method
         end
       end
@@ -131,7 +129,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'accepts non-empty module with documentation' do
     expect_no_offenses(<<~RUBY)
       # class comment
-      module My_Class
+      module MyModule
         def method
         end
       end
@@ -140,7 +138,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
 
   it 'accepts empty class without documentation' do
     expect_no_offenses(<<~RUBY)
-      class My_Class
+      class MyClass
       end
     RUBY
   end
@@ -238,7 +236,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
       it 'registers offense for macro with other methods' do
         expect_offense(<<~RUBY)
           module Foo
-          ^^^^^^ Missing top-level module documentation comment.
+          ^^^^^^^^^^ Missing top-level documentation comment for `module Foo`.
             extend B
             include C
 
@@ -253,7 +251,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
     expect do
       expect_offense(<<~RUBY)
         class Test
-        ^^^^^ Missing top-level class documentation comment.
+        ^^^^^^^^^^ Missing top-level documentation comment for `class Test`.
           if //
           end
         end
@@ -265,7 +263,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
     expect_offense(<<~RUBY)
       module A # The A Module
         class B
-        ^^^^^ Missing top-level class documentation comment.
+        ^^^^^^^ Missing top-level documentation comment for `class A::B`.
           C = 1
           def method
           end
@@ -277,7 +275,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'registers an offense for compact-style nested module' do
     expect_offense(<<~RUBY)
       module A::B
-      ^^^^^^ Missing top-level module documentation comment.
+      ^^^^^^^^^^^ Missing top-level documentation comment for `module A::B`.
         C = 1
         def method
         end
@@ -288,9 +286,25 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
   it 'registers an offense for compact-style nested class' do
     expect_offense(<<~RUBY)
       class A::B
-      ^^^^^ Missing top-level class documentation comment.
+      ^^^^^^^^^^ Missing top-level documentation comment for `class A::B`.
         C = 1
         def method
+        end
+      end
+    RUBY
+  end
+
+  it 'registers an offense for a deeply nested class' do
+    expect_offense(<<~RUBY)
+      module A::B
+        module C
+          class D
+            class E::F
+            ^^^^^^^^^^ Missing top-level documentation comment for `class A::B::C::D::E::F`.
+              def method
+              end
+            end
+          end
         end
       end
     RUBY
@@ -314,7 +328,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
         expect_offense(<<~RUBY, keyword: keyword)
           module TestModule
             %{keyword} Test
-            ^{keyword} Missing top-level #{keyword} documentation comment.
+            ^{keyword}^^^^^ Missing top-level documentation comment for `#{keyword} TestModule::Test`.
               def method
               end
               # sparse comment
@@ -350,7 +364,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
           module TestModule #:nodoc:
             TEST = 20
             %{keyword} Test
-            ^{keyword} Missing top-level #{keyword} documentation comment.
+            ^{keyword}^^^^^ Missing top-level documentation comment for `#{keyword} TestModule::Test`.
               def method
               end
             end
@@ -389,7 +403,7 @@ RSpec.describe RuboCop::Cop::Style::Documentation, :config do
           module TestModule #:nodoc:
             TEST = 20
             class Test < Parent
-            ^^^^^ Missing top-level class documentation comment.
+            ^^^^^^^^^^ Missing top-level documentation comment for `class TestModule::Test`.
               def method
               end
             end

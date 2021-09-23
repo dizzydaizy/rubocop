@@ -78,9 +78,7 @@ module RuboCop
           return false if use_if_branch?(else_branch) || use_hash_key_assignment?(else_branch)
 
           condition == if_branch && !node.elsif? && (
-            node.ternary? ||
-            !else_branch.instance_of?(AST::Node) ||
-            else_branch.single_line?
+            node.ternary? || !else_branch.instance_of?(AST::Node) || else_branch.single_line?
           )
         end
 
@@ -104,8 +102,7 @@ module RuboCop
 
         def make_ternary_form(node)
           _condition, if_branch, else_branch = *node
-          ternary_form = [if_branch.source,
-                          else_source(else_branch)].join(' || ')
+          ternary_form = [if_branch.source, else_source(else_branch)].join(' || ')
 
           if node.parent&.send_type?
             "(#{ternary_form})"
@@ -123,11 +120,10 @@ module RuboCop
         end
 
         def require_parentheses?(node)
-          node.basic_conditional? &&
-            node.modifier_form? ||
+          (node.basic_conditional? && node.modifier_form?) ||
             node.range_type? ||
             node.rescue_type? ||
-            node.respond_to?(:semantic_operator?) && node.semantic_operator?
+            (node.respond_to?(:semantic_operator?) && node.semantic_operator?)
         end
 
         def without_argument_parentheses_method?(node)

@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
-  let(:cop_config) do
-    { 'EnforcedStyleAlignWith' => 'keyword', 'AutoCorrect' => true }
-  end
+  let(:cop_config) { { 'EnforcedStyleAlignWith' => 'keyword', 'AutoCorrect' => true } }
 
   include_examples 'aligned', "\xef\xbb\xbfclass", 'Test', 'end'
 
@@ -90,9 +88,7 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
   end
 
   context 'when EnforcedStyleAlignWith is start_of_line' do
-    let(:cop_config) do
-      { 'EnforcedStyleAlignWith' => 'start_of_line', 'AutoCorrect' => true }
-    end
+    let(:cop_config) { { 'EnforcedStyleAlignWith' => 'start_of_line', 'AutoCorrect' => true } }
 
     include_examples 'aligned', 'puts 1; class',  'Test',     'end'
     include_examples 'aligned', 'puts 1; module', 'Test',     'end'
@@ -228,9 +224,7 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
   context 'when EnforcedStyleAlignWith is variable' do
     # same as 'EnforcedStyleAlignWith' => 'keyword',
     # as long as assignments or `case` are not involved
-    let(:cop_config) do
-      { 'EnforcedStyleAlignWith' => 'variable', 'AutoCorrect' => true }
-    end
+    let(:cop_config) { { 'EnforcedStyleAlignWith' => 'variable', 'AutoCorrect' => true } }
 
     include_examples 'misaligned', <<~RUBY, false
       class Test
@@ -307,6 +301,69 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
     include_examples 'aligned', 'puts 1; while',  'Test',     '        end'
     include_examples 'aligned', 'puts 1; until',  'Test',     '        end'
     include_examples 'aligned', 'puts 1; case',   'a when b', '        end'
+
+    it 'register an offense when using `+` operator method and `end` is not aligned' do
+      expect_offense(<<~RUBY)
+        variable + if condition
+                     foo
+                   else
+                     bar
+                   end
+                   ^^^ `end` at 5, 11 is not aligned with `variable + if` at 1, 0.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        variable + if condition
+                     foo
+                   else
+                     bar
+        end
+      RUBY
+    end
+
+    it 'register an offense when using `-` operator method and `end` is not aligned' do
+      expect_offense(<<~RUBY)
+        variable - if condition
+                     foo
+                   else
+                     bar
+                   end
+                   ^^^ `end` at 5, 11 is not aligned with `variable - if` at 1, 0.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        variable - if condition
+                     foo
+                   else
+                     bar
+        end
+      RUBY
+    end
+
+    it 'register an offense when using a conditional statement in a method argument and `end` is not aligned' do
+      expect_offense(<<~RUBY)
+        format(
+          case condition
+          when foo
+            bar
+          else
+            baz
+        end, qux
+        ^^^ `end` at 7, 0 is not aligned with `case` at 2, 2.
+        )
+      RUBY
+
+      expect_correction(<<~RUBY)
+        format(
+          case condition
+          when foo
+            bar
+          else
+            baz
+          end, qux
+        )
+      RUBY
+    end
   end
 
   context 'correct + opposite' do
@@ -343,9 +400,7 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
 
   context 'case as argument' do
     context 'when EnforcedStyleAlignWith is keyword' do
-      let(:cop_config) do
-        { 'EnforcedStyleAlignWith' => 'keyword', 'AutoCorrect' => true }
-      end
+      let(:cop_config) { { 'EnforcedStyleAlignWith' => 'keyword', 'AutoCorrect' => true } }
 
       include_examples 'aligned', 'test case', 'a when b', '     end'
 
@@ -357,9 +412,7 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
     end
 
     context 'when EnforcedStyleAlignWith is variable' do
-      let(:cop_config) do
-        { 'EnforcedStyleAlignWith' => 'variable', 'AutoCorrect' => true }
-      end
+      let(:cop_config) { { 'EnforcedStyleAlignWith' => 'variable', 'AutoCorrect' => true } }
 
       include_examples 'aligned', 'test case', 'a when b', 'end'
 
@@ -371,9 +424,7 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
     end
 
     context 'when EnforcedStyleAlignWith is start_of_line' do
-      let(:cop_config) do
-        { 'EnforcedStyleAlignWith' => 'start_of_line', 'AutoCorrect' => true }
-      end
+      let(:cop_config) { { 'EnforcedStyleAlignWith' => 'start_of_line', 'AutoCorrect' => true } }
 
       include_examples 'aligned', 'test case a when b', '', 'end'
 
@@ -419,9 +470,7 @@ RSpec.describe RuboCop::Cop::Layout::EndAlignment, :config do
     end
 
     context 'when EnforcedStyleAlignWith is variable' do
-      let(:cop_config) do
-        { 'EnforcedStyleAlignWith' => 'variable', 'AutoCorrect' => true }
-      end
+      let(:cop_config) { { 'EnforcedStyleAlignWith' => 'variable', 'AutoCorrect' => true } }
 
       include_examples 'aligned', 'var << if',    'test',     'end'
       include_examples 'aligned', 'var = if',     'test',     'end'
