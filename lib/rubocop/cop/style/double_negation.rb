@@ -93,7 +93,7 @@ module RuboCop
 
           if conditional_node
             double_negative_condition_return_value?(node, last_child, conditional_node)
-          elsif last_child.pair_type? || last_child.hash_type? || last_child.parent.array_type?
+          elsif last_child.type?(:pair, :hash) || last_child.parent.array_type?
             false
           else
             last_child.last_line <= node.last_line
@@ -102,13 +102,13 @@ module RuboCop
 
         def find_def_node_from_ascendant(node)
           return unless (parent = node.parent)
-          return parent if parent.def_type? || parent.defs_type?
-          return node.parent.child_nodes.first if define_mehod?(parent)
+          return parent if parent.type?(:def, :defs)
+          return node.parent.child_nodes.first if define_method?(parent)
 
           find_def_node_from_ascendant(node.parent)
         end
 
-        def define_mehod?(node)
+        def define_method?(node)
           return false unless node.block_type?
 
           child = node.child_nodes.first
@@ -147,7 +147,7 @@ module RuboCop
         def find_parent_not_enumerable(node)
           return unless (parent = node.parent)
 
-          if parent.pair_type? || parent.hash_type? || parent.array_type?
+          if parent.type?(:pair, :hash, :array)
             find_parent_not_enumerable(parent)
           else
             parent

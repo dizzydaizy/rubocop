@@ -137,7 +137,7 @@ module RuboCop
         alias on_sclass on_class
 
         def on_block(node)
-          return unless eval_call?(node)
+          return unless eval_call?(node) || included_block?(node)
 
           check_node(node.body)
         end
@@ -159,12 +159,12 @@ module RuboCop
 
         # @!method dynamic_method_definition?(node)
         def_node_matcher :dynamic_method_definition?, <<~PATTERN
-          {(send nil? :define_method ...) ({block numblock} (send nil? :define_method ...) ...)}
+          {(send nil? :define_method ...) (any_block (send nil? :define_method ...) ...)}
         PATTERN
 
         # @!method class_or_instance_eval?(node)
         def_node_matcher :class_or_instance_eval?, <<~PATTERN
-          ({block numblock} (send _ {:class_eval :instance_eval}) ...)
+          (any_block (send _ {:class_eval :instance_eval}) ...)
         PATTERN
 
         def check_node(node)
@@ -192,10 +192,13 @@ module RuboCop
           end
         end
 
+        # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         def check_child_nodes(node, unused, cur_vis)
           node.child_nodes.each do |child|
             if child.send_type? && access_modifier?(child)
               cur_vis, unused = check_send_node(child, cur_vis, unused)
+            elsif child.block_type? && included_block?(child)
+              next
             elsif method_definition?(child)
               unused = nil
             elsif start_of_new_scope?(child)
@@ -207,6 +210,7 @@ module RuboCop
 
           [cur_vis, unused]
         end
+        # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
         def check_send_node(node, cur_vis, unused)
           if node.bare_access_modifier?
@@ -240,6 +244,10 @@ module RuboCop
           [new_vis, unused]
         end
 
+        def included_block?(block_node)
+          active_support_extensions_enabled? && block_node.method?(:included)
+        end
+
         def method_definition?(child)
           static_method_definition?(child) ||
             dynamic_method_definition?(child) ||
@@ -248,7 +256,7 @@ module RuboCop
 
         def any_method_definition?(child)
           cop_config.fetch('MethodCreatingMethods', []).any? do |m|
-            matcher_name = "#{m}_method?".to_sym
+            matcher_name = :"#{m}_method?"
             unless respond_to?(matcher_name)
               self.class.def_node_matcher matcher_name, <<~PATTERN
                 {def (send nil? :#{m} ...)}
@@ -260,7 +268,7 @@ module RuboCop
         end
 
         def start_of_new_scope?(child)
-          child.module_type? || child.class_type? || child.sclass_type? || eval_call?(child)
+          child.type?(:module, :class, :sclass) || eval_call?(child)
         end
 
         def eval_call?(child)
@@ -271,10 +279,10 @@ module RuboCop
 
         def any_context_creating_methods?(child)
           cop_config.fetch('ContextCreatingMethods', []).any? do |m|
-            matcher_name = "#{m}_block?".to_sym
+            matcher_name = :"#{m}_block?"
             unless respond_to?(matcher_name)
               self.class.def_node_matcher matcher_name, <<~PATTERN
-                ({block numblock} (send {nil? const} {:#{m}} ...) ...)
+                (any_block (send {nil? const} {:#{m}} ...) ...)
               PATTERN
             end
 

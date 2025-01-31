@@ -3,7 +3,7 @@
 module RuboCop
   module Cop
     module Layout
-      # Checks for comma (,) not followed by some kind of space.
+      # Checks for comma (`,`) not followed by some kind of space.
       #
       # @example
       #
@@ -24,7 +24,15 @@ module RuboCop
         end
 
         def kind(token)
-          'comma' if token.comma?
+          'comma' if token.comma? && !before_semicolon?(token)
+        end
+
+        private
+
+        def before_semicolon?(token)
+          tokens = processed_source.tokens
+
+          tokens[tokens.index(token) + 1].semicolon?
         end
       end
     end

@@ -28,10 +28,10 @@ module RuboCop
         MSG = 'Avoid multi-line chains of blocks.'
 
         def on_block(node)
-          node.send_node.each_node(:send) do |send_node|
+          node.send_node.each_node(:send, :csend) do |send_node|
             receiver = send_node.receiver
 
-            next unless (receiver&.block_type? || receiver&.numblock_type?) && receiver&.multiline?
+            next unless receiver&.any_block_type? && receiver.multiline?
 
             range = range_between(receiver.loc.end.begin_pos, node.send_node.source_range.end_pos)
 

@@ -10,6 +10,7 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
   it_behaves_like 'accepts', 'foo == bar { baz a }'
   it_behaves_like 'accepts', 'foo ->(a) { bar a }'
   it_behaves_like 'accepts', 'some_method(a) { |el| puts el }'
+  it_behaves_like 'accepts', 'some_method(a) { puts _1 }'
   it_behaves_like 'accepts', 'some_method(a) do;puts a;end'
   it_behaves_like 'accepts', 'some_method a do;puts "dev";end'
   it_behaves_like 'accepts', 'some_method a do |e|;puts e;end'
@@ -37,6 +38,23 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
           some_method a { |el| puts el }
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `a { |el| puts el }` to make sure that the block will be associated with the `a` method call.
         RUBY
+
+        expect_correction(<<~RUBY)
+          some_method(a { |el| puts el })
+        RUBY
+      end
+    end
+
+    context 'without receiver and numblock' do
+      it 'registers an offense' do
+        expect_offense(<<~RUBY)
+          some_method a { puts _1 }
+          ^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `a { puts _1 }` to make sure that the block will be associated with the `a` method call.
+        RUBY
+
+        expect_correction(<<~RUBY)
+          some_method(a { puts _1 })
+        RUBY
       end
     end
 
@@ -46,6 +64,10 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
           Foo.some_method a { |el| puts el }
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `a { |el| puts el }` to make sure that the block will be associated with the `a` method call.
         RUBY
+
+        expect_correction(<<~RUBY)
+          Foo.some_method(a { |el| puts el })
+        RUBY
       end
 
       context 'when using safe navigation operator' do
@@ -53,6 +75,10 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
           expect_offense(<<~RUBY)
             Foo&.some_method a { |el| puts el }
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `a { |el| puts el }` to make sure that the block will be associated with the `a` method call.
+          RUBY
+
+          expect_correction(<<~RUBY)
+            Foo&.some_method(a { |el| puts el })
           RUBY
         end
       end
@@ -64,6 +90,10 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
           expect { order.expire }.to change { order.events }
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `change { order.events }` to make sure that the block will be associated with the `change` method call.
         RUBY
+
+        expect_correction(<<~RUBY)
+          expect { order.expire }.to(change { order.events })
+        RUBY
       end
     end
 
@@ -73,6 +103,10 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
           Hash[some_method a { |el| el }]
                ^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `a { |el| el }` to make sure that the block will be associated with the `a` method call.
         RUBY
+
+        expect_correction(<<~RUBY)
+          Hash[some_method(a { |el| el })]
+        RUBY
       end
     end
 
@@ -81,6 +115,10 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
         expect_offense(<<~RUBY)
           foo = some_method a { |el| puts el }
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `a { |el| puts el }` to make sure that the block will be associated with the `a` method call.
+        RUBY
+
+        expect_correction(<<~RUBY)
+          foo = some_method(a { |el| puts el })
         RUBY
       end
     end
@@ -99,6 +137,10 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
       expect_offense(<<~RUBY)
         expect { order.expire }.to update { order.events }
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `update { order.events }` to make sure that the block will be associated with the `update` method call.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        expect { order.expire }.to(update { order.events })
       RUBY
     end
   end
@@ -120,6 +162,10 @@ RSpec.describe RuboCop::Cop::Lint::AmbiguousBlockAssociation, :config do
       expect_offense(<<~RUBY)
         expect { order.expire }.to update { order.events }
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Parenthesize the param `update { order.events }` to make sure that the block will be associated with the `update` method call.
+      RUBY
+
+      expect_correction(<<~RUBY)
+        expect { order.expire }.to(update { order.events })
       RUBY
     end
   end
