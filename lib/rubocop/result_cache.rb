@@ -196,6 +196,17 @@ module RuboCop
         end
       end
 
+      # Return a hash of the options given at invocation, minus the ones that have
+      # no effect on which offenses and disabled line ranges are found, and thus
+      # don't affect caching.
+      def relevant_options_digest(options)
+        @relevant_options_digest ||= {}
+        @relevant_options_digest[options] ||= begin
+          options = options.reject { |key, _| NON_CHANGING.include?(key) }
+          options.to_s.gsub(/[^a-z]+/i, '_')
+        end
+      end
+
       private
 
       def digest(path)
@@ -227,20 +238,12 @@ module RuboCop
       end
     end
 
-    # Return a hash of the options given at invocation, minus the ones that have
-    # no effect on which offenses and disabled line ranges are found, and thus
-    # don't affect caching.
-    def relevant_options_digest(options)
-      options = options.reject { |key, _| NON_CHANGING.include?(key) }
-      options.to_s.gsub(/[^a-z]+/i, '_')
-    end
-
     # We combine team and options into a single "context" checksum to avoid
     # making file names that are too long for some filesystems to handle.
     # This context is for anything that's not (1) the RuboCop executable
     # checksum or (2) the inspected file checksum.
     def context_checksum(team, options)
-      keys = [team.external_dependency_checksum, relevant_options_digest(options)]
+      keys = [team.external_dependency_checksum, self.class.relevant_options_digest(options)]
       Digest::SHA1.hexdigest(keys.join)
     end
   end
