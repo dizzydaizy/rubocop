@@ -389,6 +389,29 @@ RSpec.describe RuboCop::ResultCache, :isolated_environment do
     end
   end
 
+  describe '.relevant_options_digest' do
+    before do
+      described_class.instance_variable_set(:@relevant_options_digest, nil)
+    end
+
+    it 'calculates a digest' do
+      options = { only: ['Layout/EmptyLines'] }
+
+      digest = described_class.relevant_options_digest(options)
+
+      expect(digest).to eq('_only_Layout_EmptyLines_')
+    end
+
+    it 'caches options digest' do
+      options = { only: ['Layout/EmptyLines'] }
+
+      expect(options).to receive(:reject).once.and_call_original
+
+      described_class.relevant_options_digest(options)
+      described_class.relevant_options_digest(options)
+    end
+  end
+
   describe 'the cache path' do
     let(:config_store) { instance_double(RuboCop::ConfigStore) }
     let(:puid) { Process.uid.to_s }
